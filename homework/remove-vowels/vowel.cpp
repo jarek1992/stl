@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <string>
 
 void removeVowels(std::vector<std::string>& words) {
     auto isVowel = [](char c) {
@@ -6,6 +7,6 @@ void removeVowels(std::vector<std::string>& words) {
         return vowels.find(c) != std::string::npos;
     };
     for (auto& word : words) {
-        text.erase(std::remove_if(word.begin(), word.end(), isVowel), word.end());
+        word.erase(std::remove_if(word.begin(), word.end(), isVowel), word.end());
     }
 }
