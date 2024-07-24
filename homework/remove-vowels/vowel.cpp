@@ -3,7 +3,7 @@
 
 void removeVowels(std::vector<std::string>& words) {
     auto isVowel = [](char c) {
-        static const std::string vowels = {'a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U','Y'};
+        static const std::string vowels = {'a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'};
         return vowels.find(c) != std::string::npos;
     };
     for (auto& word : words) {
