@@ -3,8 +3,8 @@
 
 #include "compression.hpp"
 
-compressedGrayscaleImage compressGrayscale(const grayScaleImage& bitmap) {
-    compressedGrayscaleImage compressed;
+std::vector<std::pair<uint8_t, uint8_t>>compressGrayscale(const std::array<std::array<uint8_t, width>, height>& bitmap) {
+    std::vector<std::pair<uint8_t, uint8_t>> compressed;
     compressed.reserve(width * height);
     for(const auto& row : bitmap) {
         auto it = row.begin();
@@ -22,8 +22,8 @@ compressedGrayscaleImage compressGrayscale(const grayScaleImage& bitmap) {
     return compressed;
 }
 
-grayScaleImage decompressGrayscale(const compressedGrayscaleImage& compressed) {
-    grayScaleImage decompressed = {};
+std::array<std::array<uint8_t, width>, height> decompressGrayscale(const std::vector<std::pair<uint8_t, uint8_t>>& compressed) {
+    std::array<std::array<uint8_t, width>, height> decompressed = {};
     size_t i = 0, j = 0;
     for(const auto& pair : compressed) {
         uint8_t value = pair.first;
@@ -40,7 +40,7 @@ grayScaleImage decompressGrayscale(const compressedGrayscaleImage& compressed) {
     return decompressed;
 }
 
-void printMap(const grayScaleImage& bitmap) {
+void printMap(const std::array<std::array<uint8_t, width>, height>& bitmap) {
     for(const auto& row : bitmap) {
         for(const auto& el : row) {
             if(el < 32) {
