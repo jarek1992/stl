@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.11.0)
 
+
+project(transformContainers)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+enable_testing()
 
 include(FetchContent)
 FetchContent_Declare(
@@ -13,12 +17,11 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# Now simply link against gtest or gtest_main as needed. Eg
-
-project(transformContainers)
-enable_testing()
-
-add_executable(${PROJECT_NAME}-ut test.cpp transform.cpp main.cpp) 
+add_executable(${PROJECT_NAME}-ut 
+	test.cpp 
+	transform.cpp 
+	main.cpp
+) 
 
 add_compile_options(${PROJECT_NAME}-ut -Wall -Wextra -Wconversion -pedantic -Werror)
 

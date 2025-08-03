@@ -7,4 +7,6 @@
 #include <algorithm>
 #include <list>
 
-std::map<int, std::string> removeDuplicateAndTranformToMap(const std::list<std::string>& values, const std::deque<int>& keys);
+std::map<int, std::string> removeDuplicateAndTranformToMap(
+	std::list<std::string>& values, 
+	std::deque<int>& keys);
