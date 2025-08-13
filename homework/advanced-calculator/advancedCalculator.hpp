@@ -7,7 +7,7 @@ enum class ErrorCode {
 	Ok,
 	BadCharacter,
 	BadFormat,
-	DividedBy0,
+	DivideBy0,
     SqrtOfNegativeNumber,
     ModuleOfNonIntegerValue
 };
