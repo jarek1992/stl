@@ -170,7 +170,7 @@ TEST(advancedCalculatorTest, ShouldReturnDivideBy0) {
 
     ASSERT_EQ(process("123 / 0", &result), ErrorCode::DivideBy0);
     ASSERT_EQ(process("123 / 0.0", &result), ErrorCode::DivideBy0);
-    ASSERT_EQ(process("123 / -0", &result), ErrorCode::DivideBy0);
+    ASSERT_EQ(process("123 / -0", &result), ErrorCode::DivideBy0); 
     ASSERT_EQ(process("123 / -0.0", &result), ErrorCode::DivideBy0);
     ASSERT_EQ(process("-123 / -0.0", &result), ErrorCode::DivideBy0);
     ASSERT_EQ(process("0.0 / 0", &result), ErrorCode::DivideBy0);
