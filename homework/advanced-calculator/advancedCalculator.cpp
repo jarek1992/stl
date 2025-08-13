@@ -26,50 +26,48 @@ AdvancedCalculator::AdvancedCalculator() {
     operations['+'] = [](double a, double b, double* out) {
         *out = a + b;
         return ErrorCode::OK;
-        };
+    };
     operations['-'] = [](double a, double b, double* out) {
         *out = a - b;
         return ErrorCode::OK;
-        };
+    };
     operations['*'] = [](double a, double b, double* out) {
         *out = a * b;
         return ErrorCode::OK;
-        };
+    };
     operations['/'] = [](double a, double b, double* out) {
         if (b == 0.0) {
             return ErrorCode::DivideBy0;
         }
         *out = a / b;
         return ErrorCode::OK;
-        };
+    };
     operations['%'] = [](double a, double b, double* out) {
         if (b == 0.0) {
             return ErrorCode::DivideBy0;
-        }
-        else if (static_cast<long long>(a) != a || static_cast<long long>(b) != b) {
+        } else if (static_cast<long long>(a) != a || static_cast<long long>(b) != b) {
             return ErrorCode::ModuleOfNonIntegerValue;
         }
         *out = static_cast<long long>(a) % static_cast<long long>(b);
         return ErrorCode::OK;
-        };
+    };
     operations['^'] = [](double a, double b, double* out) {
         *out = std::pow(a, b);
         return ErrorCode::OK;
-        };
+    };
     operations['$'] = [](double a, double b, double* out) {
         if (b == 0.0) {
             return ErrorCode::DivideBy0;
-        }
-        else if (a < 0 && static_cast<long long>(b) % 2 == 0) {
+        } else if (a < 0 && static_cast<long long>(b) % 2 == 0) {
             return ErrorCode::SqrtOfNegativeNumber;
         }
         *out = std::pow(a, 1.0 / b);
         return ErrorCode::OK;
-        };
+    };
     operations['!'] = [](double a, double, double* out) {
         *out = std::tgamma(a + 1);
         return ErrorCode::OK;
-        };
+    };
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) const {
@@ -82,7 +80,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) con
     if (!iss || operations.find(op) == operations.end()) {
         return ErrorCode::BadCharacter;
     }
-    
+
     if (op != '!') {
         iss >> b;
         if (!iss) {
@@ -91,5 +89,3 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) con
     }
     return operations.at(op)(a, b, out);
 }
-
-

@@ -1,13 +1,13 @@
-#include <map>
 #include <functional>
+#include <map>
 #include <string>
 #include <variant>
 
 enum class ErrorCode {
-	OK,
-	BadCharacter,
-	BadFormat,
-	DivideBy0,
+    OK,
+    BadCharacter,
+    BadFormat,
+    DivideBy0,
     SqrtOfNegativeNumber,
     ModuleOfNonIntegerValue
 };
@@ -16,10 +16,9 @@ std::string errorCodeToString(ErrorCode code);
 
 class AdvancedCalculator {
 public:
-	AdvancedCalculator();
+    AdvancedCalculator();
     ErrorCode process(const std::string& input, double* out) const;
 
 private:
     std::map<char, std::function<ErrorCode(double, double, double*)>> operations;
-
 };
