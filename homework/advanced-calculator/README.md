@@ -24,7 +24,7 @@ ___
 
 ### Error code
 
-* `Ok`
+* `OK`
 * `BadCharacter` - znak inny niż liczba
 * `BadFormat` - zły format komendy np. + 5 4, powinno być 4 + 5
 * `DivideBy0` - dzielenie przez 0
@@ -40,7 +40,7 @@ ErrorCode process(std::string input, double* out)
 ```
 
 * Funkcja ta powinna przyjmować dane od użytkownika oraz dokonywać odpowiedniej kalkulacji
-* Jeżeli dane są poprawne, ma zwrócić `ErrorCode:Ok`, a w zmiennej `out` ma zapisać wynik
+* Jeżeli dane są poprawne, ma zwrócić `ErrorCode:OK`, a w zmiennej `out` ma zapisać wynik
 * Jeżeli wystąpi któryś z błędów, funkcja ma go zwrócić, a w `out` ma nic nie zapisywać
 
 ___
