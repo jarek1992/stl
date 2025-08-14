@@ -70,7 +70,7 @@ AdvancedCalculator::AdvancedCalculator() {
     };
 }
 
-ErrorCode AdvancedCalculator::process(const std::string& input, double* out) const {
+ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     std::istringstream iss(input);
     double a = 0;
     double b = 0;
@@ -88,4 +88,9 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) con
         }
     }
     return operations.at(op)(a, b, out);
+}
+
+ErrorCode process(const std::string& input, double* out) {
+    AdvancedCalculator calc;
+    return calc.process(input, out);
 }

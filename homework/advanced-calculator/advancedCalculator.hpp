@@ -1,3 +1,6 @@
+#pragma once
+
+#include <str>
 #include <functional>
 #include <map>
 #include <string>
@@ -17,8 +20,11 @@ std::string errorCodeToString(ErrorCode code);
 class AdvancedCalculator {
 public:
     AdvancedCalculator();
-    ErrorCode process(const std::string& input, double* out) const;
+    ErrorCode process(const std::string& input, double* out);
 
 private:
     std::map<char, std::function<ErrorCode(double, double, double*)>> operations;
 };
+
+ErrorCode process(const std::string& input, double* out);
+
