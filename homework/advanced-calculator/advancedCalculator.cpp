@@ -68,48 +68,60 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['!'] = [](double a, double, double* out) {
-        bool negative = a < 0;
-        a = std::fabs(a);
-
-        if (a != std::floor(a)) {
+        if (std::isnan(a) || std::isinf(a)) {
             return ErrorCode::BadFormat;
         }
 
+        bool negative = a < 0;
+        double x = std::fabs(a);
         double result = 1;
-        for (int i = 1; i <= static_cast<int>(a); ++i) {
-            result *= i;
+
+        if (x == std::floor(x)) {
+            for (int i = 1; i <= static_cast<int>(x); ++i) {
+                result *= i;
+            }
+        } else {
+            result = tgamma(x + 1);
         }
-      
+
         *out = negative ? -result : result;
         return ErrorCode::OK;
     };
 }
 
-ErrorCode AdvancedCalculator::process(const std::string& input, double* out)  {
-    std::istringstream iss(input);
-    double a = 0;
-    double b = 0;
-    char op = 0;
+ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
 
-    iss >> a >> op;
-    if (!iss || operations.find(op) == operations.end()) {
-        return ErrorCode::BadCharacter;
-    }
-
-    if (op != '!') {
-        iss >> b;
-        if (!iss) {
-            return ErrorCode::BadFormat;
+    for (char c : input) {
+        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
+            c != '.' && c != '!' && c != ' ' && c != '(' && c != ')') {
+            return ErrorCode::BadCharacter;
         }
     }
 
-    char extra;
-    if (iss >> extra) {
-        return ErrorCode::BadCharacter;
-    }
+        std::istringstream iss(input);
+        double a = 0;
+        double b = 0;
+        char op = 0;
 
-    return operations.at(op)(a, b, out);
-}
+        iss >> a >> op;
+        if (!iss || operations.find(op) == operations.end()) {
+            return ErrorCode::BadFormat;
+        }
+
+        if (op != '!') {
+            iss >> b;
+            if (!iss) {
+                return ErrorCode::BadFormat;
+            }
+        }
+
+        char extra;
+        if (iss >> extra) {
+            return ErrorCode::BadCharacter;
+        }
+
+        return operations.at(op)(a, b, out);
+    }
 
 ErrorCode process(const std::string& input, double* out) {
     AdvancedCalculator calc;
