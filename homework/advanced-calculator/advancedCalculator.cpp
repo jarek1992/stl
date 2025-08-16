@@ -43,10 +43,10 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['%'] = [](double a, double b, double* out) {
-        if (b == 0.0) {
-            return ErrorCode::DivideBy0;
-        } else if (static_cast<long long>(a) != a || static_cast<long long>(b) != b) {
+        if (std::floor(a) != a || std::floor(b) != b) {
             return ErrorCode::ModuleOfNonIntegerValue;
+        } else if (b == 0.0) {
+            return ErrorCode::DivideBy0;
         }
         *out = static_cast<long long>(a) % static_cast<long long>(b);
         return ErrorCode::OK;
@@ -56,6 +56,9 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['$'] = [](double a, double b, double* out) {
+        if (a < 0) {
+            return ErrorCode::SqrtOfNegativeNumber;
+        }
         if (b == 0.0) {
             return ErrorCode::DivideBy0;
         } else if (a < 0 && static_cast<long long>(b) % 2 == 0) {
@@ -65,12 +68,24 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['!'] = [](double a, double, double* out) {
-        *out = std::tgamma(a + 1);
+        bool negative = a < 0;
+        a = std::fabs(a);
+
+        if (a != std::floor(a)) {
+            return ErrorCode::BadFormat;
+        }
+
+        double result = 1;
+        for (int i = 1; i <= static_cast<int>(a); ++i) {
+            result *= i;
+        }
+      
+        *out = negative ? -result : result;
         return ErrorCode::OK;
     };
 }
 
-ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
+ErrorCode AdvancedCalculator::process(const std::string& input, double* out)  {
     std::istringstream iss(input);
     double a = 0;
     double b = 0;
@@ -87,6 +102,12 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
             return ErrorCode::BadFormat;
         }
     }
+
+    char extra;
+    if (iss >> extra) {
+        return ErrorCode::BadCharacter;
+    }
+
     return operations.at(op)(a, b, out);
 }
 
