@@ -71,23 +71,45 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
+    for (char c : input) {
+        if (c == ',') {
+            return ErrorCode::BadFormat;  // tylko '.' jako separator dziesiętny
+        }
+        if (!(std::isdigit(c) || c == '.' || c == '+' || c == '-' ||
+              c == '*' || c == '/' || c == '^' || c == '%' || c == '$' ||
+              c == '!' || std::isspace(static_cast<unsigned char>(c)))) {
+            return ErrorCode::BadCharacter;
+        }
+    }
+
     std::istringstream iss(input);
     double a = 0;
     double b = 0;
     char op = 0;
 
-    iss >> a >> op;
+    iss >> a;  // pierwsza liczba
+    if (!iss) {
+        return ErrorCode::BadFormat;
+    }
+
+    iss >> op;  // operator
     if (!iss || operations.find(op) == operations.end()) {
         return ErrorCode::BadCharacter;
     }
 
-    if (op != '!') {
-        iss >> b;
+    if (op == '!') {
+        // silnia tylko dla liczb całkowitych >= 0
+        if (a < 0 || static_cast<long long>(a) != a) {
+            return ErrorCode::BadFormat;
+        }
+        return operations.at(op)(a, 0, out);
+    } else {
+        iss >> b;  // druga liczba
         if (!iss) {
             return ErrorCode::BadFormat;
         }
+        return operations.at(op)(a, b, out);
     }
-    return operations.at(op)(a, b, out);
 }
 
 ErrorCode process(const std::string& input, double* out) {
