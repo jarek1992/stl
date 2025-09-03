@@ -105,20 +105,16 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double b = 0;
     char op = 0;
 
-    iss >> a >> op;
-    if (!iss) {
+    if (!(iss >> a >> op))
         return ErrorCode::BadFormat;
-    }
 
     if (operations.find(op) == operations.end()) {
         return ErrorCode::BadCharacter;
     }
 
     if (op != '!') {
-        iss >> b;
-        if (!iss) {
+        if (!(iss >> b))
             return ErrorCode::BadFormat;
-        }
     }
 
     std::string rest;
