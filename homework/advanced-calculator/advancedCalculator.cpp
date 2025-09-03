@@ -72,10 +72,6 @@ AdvancedCalculator::AdvancedCalculator() {
             return ErrorCode::BadFormat;
         }
 
-        if (a < 0 && a == std::floor(a)) {
-            return ErrorCode::BadFormat;
-        }
-
         long double result = 1.0;
         double x = std::fabs(a);
 
