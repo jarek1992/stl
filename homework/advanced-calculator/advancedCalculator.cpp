@@ -104,8 +104,11 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         char op = 0;
 
         iss >> a >> op;
-        if (!iss || operations.find(op) == operations.end()) {
+        if (!iss) {
             return ErrorCode::BadFormat;
+        }
+        if (operations.find(op) == operations.end()) {
+            return ErrorCode::BadCharacter;
         }
 
         if (op != '!') {
