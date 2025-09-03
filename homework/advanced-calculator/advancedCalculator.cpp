@@ -93,9 +93,6 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         if (c == ',') {
             return ErrorCode::BadFormat;
         }
-        if (!input.empty() && (input[0] == '+' || input[0] == '-')) {
-            return ErrorCode::BadFormat;
-        }
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
