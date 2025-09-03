@@ -109,6 +109,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (!iss) {
         return ErrorCode::BadFormat;
     }
+
     if (operations.find(op) == operations.end()) {
         return ErrorCode::BadCharacter;
     }
