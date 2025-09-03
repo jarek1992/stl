@@ -72,32 +72,26 @@ AdvancedCalculator::AdvancedCalculator() {
             return ErrorCode::BadFormat;
         }
 
-        bool negative = a < 0;
-        double x = std::fabs(a);
-        double result = 1;
-
-        if (x == std::floor(x)) {
-            for (int i = 1; i <= static_cast<int>(x); ++i) {
-                result *= i;
-            }
-        } else {
-            result = tgamma(x + 1);
+        if (a < 0 && a == std::floor(a)) {
+            return ErrorCode::BadFormat;
         }
 
-        *out = negative ? -result : result;
+        if (a == std::floor(a)) {
+            long long n = static_cast<long long>(a);
+            double result = 1;
+            for (long long i = 1; i <= n; ++i) {
+                result *= i;
+            }
+            *out = result;
+        } else {
+            *out = tgamma(a + 1);
+        }
+
         return ErrorCode::OK;
     };
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-
-    for (char c : input) {
-        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
-            c != '.' && c != '!' && c != ' ' && c != '(' && c != ')') {
-            return ErrorCode::BadCharacter;
-        }
-    }
-
         std::istringstream iss(input);
         double a = 0;
         double b = 0;
