@@ -90,13 +90,13 @@ AdvancedCalculator::AdvancedCalculator() {
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     for (char c : input) {
-        if (c == ',') {
-            return ErrorCode::BadFormat;
-        }
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
+        }
+        if (c == ',') {
+            return ErrorCode::BadFormat;
         }
     }
 
@@ -121,9 +121,13 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         }
     }
 
-    char extra;
-    if (iss >> extra) {
-        return ErrorCode::BadCharacter;
+    std::string rest;
+    if (std::getline(iss, rest)) {
+        for (char c : rest) {
+            if (!std::isspace(c)) {
+                return ErrorCode::BadFormat;
+            }
+        }
     }
 
     return operations.at(op)(a, b, out);
