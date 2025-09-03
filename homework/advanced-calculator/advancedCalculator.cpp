@@ -91,15 +91,15 @@ AdvancedCalculator::AdvancedCalculator() {
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     for (char c : input) {
         if (c == ',') {
-            return ErrorCode::BadCharacter;
+            return ErrorCode::BadFormat;
+        }
+        if (!input.empty() && (input[0] == '+' || input[0] == '-')) {
+            return ErrorCode::BadFormat;
         }
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
-        }
-        if (!input.empty() && (input[0] == '+' || input[0] == '-')) {
-            return ErrorCode::BadFormat;
         }
     }
 
