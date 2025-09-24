@@ -89,7 +89,7 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // Sprawdzenie nieprawidłowych znaków
+    // Sprawdzenie niepoprawnych znaków
     for (char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
@@ -99,18 +99,12 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     }
 
     std::istringstream iss(input);
-    std::string token;
     double a = 0, b = 0;
     char op = 0;
 
-    // Wczytanie pierwszej liczby (ze znakiem + lub -)
-    if (!(iss >> token))
+    // Wczytanie pierwszej liczby (ze znakiem)
+    if (!(iss >> a))
         return ErrorCode::BadFormat;
-    try {
-        a = std::stod(token);
-    } catch (...) {
-        return ErrorCode::BadFormat;
-    }
 
     // Wczytanie operatora
     if (!(iss >> op))
@@ -118,27 +112,13 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // W przypadku operatora "!" nie ma drugiej liczby
-    if (op == '!') {
-        std::string rest;
-        if (std::getline(iss, rest)) {
-            for (char c : rest)
-                if (!std::isspace(c))
-                    return ErrorCode::BadFormat;
-        }
-        return operations.at(op)(a, 0, out);
+    // Operator "!" nie wymaga drugiej liczby
+    if (op != '!') {
+        if (!(iss >> b))
+            return ErrorCode::BadFormat;
     }
 
-    // Wczytanie drugiej liczby
-    if (!(iss >> token))
-        return ErrorCode::BadFormat;
-    try {
-        b = std::stod(token);
-    } catch (...) {
-        return ErrorCode::BadFormat;
-    }
-
-    // Po drugiej liczbie nie może być nic poza spacjami
+    // Sprawdzenie, czy nie ma dodatkowych znaków poza spacjami
     std::string rest;
     if (std::getline(iss, rest)) {
         for (char c : rest)
@@ -146,6 +126,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
                 return ErrorCode::BadFormat;
     }
 
+    // Wykonanie operacji
     return operations.at(op)(a, b, out);
 }
 
