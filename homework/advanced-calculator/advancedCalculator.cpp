@@ -89,7 +89,7 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // Sprawdzenie niepoprawnych znaków
+    // Sprawdzenie niedozwolonych znaków
     for (char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
@@ -118,12 +118,13 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
             return ErrorCode::BadFormat;
     }
 
-    // Sprawdzenie, czy nie ma dodatkowych znaków poza spacjami
+    // Sprawdzenie, czy nie ma więcej danych poza spacjami
     std::string rest;
     if (std::getline(iss, rest)) {
-        for (char c : rest)
+        for (char c : rest) {
             if (!std::isspace(c))
                 return ErrorCode::BadFormat;
+        }
     }
 
     // Wykonanie operacji
