@@ -1,7 +1,7 @@
-﻿#include <cmath>
-#include <sstream>
+﻿#include "advancedCalculator.hpp"
 
-#include "advancedCalculator.hpp"
+#include <cmath>
+#include <sstream>
 
 std::string errorCodeToString(ErrorCode code) {
     switch (code) {
@@ -99,7 +99,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
-            return ErrorCode::BadCharacter;
+            return ErrorCode::BadCharacter;  
         }
     }
 
