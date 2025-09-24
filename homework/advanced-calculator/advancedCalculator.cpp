@@ -89,59 +89,48 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // 1. Usuń spacje
-    std::string expr;
+    // 1. Walidacja znaków
     for (char c : input) {
-        if (!std::isspace(static_cast<unsigned char>(c))) {
-            expr.push_back(c);
+        if (c == ',') {
+            return ErrorCode::BadFormat;
         }
-    }
-    if (expr.empty())
-        return ErrorCode::BadFormat;
-
-    // 2. Sprawdź znaki
-    for (char c : expr) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
-            c != '.' && c != '!' && c != '%' && c != '^' && c != '$') {
+            c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
+            c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
         }
     }
 
-    // 3. Szukaj operatora (pierwszy znak może być częścią liczby!)
-    char op = 0;
-    size_t opPos = std::string::npos;
-
-    for (size_t i = 1; i < expr.size(); ++i) {  // zaczynamy od 1, żeby nie traktować '+'/'-' na początku jako operatora
-        char c = expr[i];
-        if (operations.count(c)) {
-            if (op != 0) {
-                // więcej niż jeden operator
-                return ErrorCode::BadFormat;
-            }
-            op = c;
-            opPos = i;
-        }
-    }
-
-    if (op == 0)
-        return ErrorCode::BadFormat;
-
+    // 2. Parsowanie
+    std::istringstream iss(input);
     double a = 0, b = 0;
+    char op = 0;
 
-    try {
-        if (op == '!') {
-            // factorial: tylko lewa liczba
-            a = std::stod(expr.substr(0, opPos));
-        } else {
-            // binary operator
-            a = std::stod(expr.substr(0, opPos));
-            b = std::stod(expr.substr(opPos + 1));
-        }
-    } catch (...) {
+    if (!(iss >> a >> op)) {
         return ErrorCode::BadFormat;
     }
 
-    // 4. Wykonaj działanie
+    // 3. Operator znany?
+    if (operations.find(op) == operations.end()) {
+        return ErrorCode::BadCharacter;
+    }
+
+    // 4. Unary operator factorial
+    if (op != '!') {
+        if (!(iss >> b)) {
+            return ErrorCode::BadFormat;
+        }
+    }
+
+    // 5. Czy zostały dodatkowe znaki (ignorujemy spacje)?
+    char extra;
+    while (iss >> extra) {
+        if (!std::isspace(extra)) {
+            return ErrorCode::BadFormat;
+        }
+    }
+
+    // 6. Wykonanie operacji
     return operations.at(op)(a, b, out);
 }
 
