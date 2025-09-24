@@ -89,11 +89,8 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // 1. Walidacja znaków
+    // 1. Sprawdzenie nieprawidłowych znaków
     for (char c : input) {
-        if (c == ',') {
-            return ErrorCode::BadFormat;
-        }
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
@@ -101,36 +98,44 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         }
     }
 
-    // 2. Parsowanie
     std::istringstream iss(input);
     double a = 0, b = 0;
     char op = 0;
 
-    if (!(iss >> a >> op)) {
+    // 2. Wczytanie pierwszej liczby
+    if (!(iss >> a))
         return ErrorCode::BadFormat;
-    }
 
-    // 3. Operator znany?
-    if (operations.find(op) == operations.end()) {
+    // 3. Wczytanie operatora
+    if (!(iss >> op))
+        return ErrorCode::BadFormat;
+
+    if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
-    }
 
-    // 4. Unary operator factorial
+    // 4. Wczytanie drugiej liczby, jeśli to nie jest '!'
     if (op != '!') {
-        if (!(iss >> b)) {
+        // Sprawdzenie, czy następny znak nie jest operatorem (podwójne operatory)
+        char next = iss.peek();
+        if (next == '+' || next == '-' || next == '*' || next == '/' ||
+            next == '%' || next == '^' || next == '$') {
             return ErrorCode::BadFormat;
+        }
+
+        if (!(iss >> b))
+            return ErrorCode::BadFormat;
+    }
+
+    // 5. Sprawdzenie, czy nie ma dodatkowych nie-spacji znaków
+    std::string rest;
+    if (std::getline(iss, rest)) {
+        for (char c : rest) {
+            if (!std::isspace(c))
+                return ErrorCode::BadFormat;
         }
     }
 
-    // 5. Czy zostały dodatkowe znaki (ignorujemy spacje)?
-    char extra;
-    while (iss >> extra) {
-        if (!std::isspace(extra)) {
-            return ErrorCode::BadFormat;
-        }
-    }
-
-    // 6. Wykonanie operacji
+    // 6. Wywołanie odpowiedniej operacji
     return operations.at(op)(a, b, out);
 }
 
