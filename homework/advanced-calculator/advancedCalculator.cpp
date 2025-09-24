@@ -89,16 +89,17 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
+    // 1. Usuń spacje
     std::string expr;
     for (char c : input) {
         if (!std::isspace(static_cast<unsigned char>(c))) {
             expr.push_back(c);
         }
     }
-
     if (expr.empty())
         return ErrorCode::BadFormat;
 
+    // 2. Sprawdź znaki
     for (char c : expr) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != '%' && c != '^' && c != '$') {
@@ -106,12 +107,15 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         }
     }
 
+    // 3. Szukaj operatora (pierwszy znak może być częścią liczby!)
     char op = 0;
     size_t opPos = std::string::npos;
-    for (size_t i = 0; i < expr.size(); ++i) {
+
+    for (size_t i = 1; i < expr.size(); ++i) {  // zaczynamy od 1, żeby nie traktować '+'/'-' na początku jako operatora
         char c = expr[i];
         if (operations.count(c)) {
             if (op != 0) {
+                // więcej niż jeden operator
                 return ErrorCode::BadFormat;
             }
             op = c;
@@ -126,8 +130,10 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
 
     try {
         if (op == '!') {
+            // factorial: tylko lewa liczba
             a = std::stod(expr.substr(0, opPos));
         } else {
+            // binary operator
             a = std::stod(expr.substr(0, opPos));
             b = std::stod(expr.substr(opPos + 1));
         }
@@ -135,9 +141,9 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return ErrorCode::BadFormat;
     }
 
+    // 4. Wykonaj działanie
     return operations.at(op)(a, b, out);
 }
-
 
 ErrorCode process(const std::string& input, double* out) {
     AdvancedCalculator calc;
