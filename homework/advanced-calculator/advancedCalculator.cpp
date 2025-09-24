@@ -89,48 +89,55 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    if (!input.empty() && (input[0] == '+' || input[0] == '-')) {
-        if (input.size() > 1 && std::isdigit(input[1])) {
-            return ErrorCode::BadFormat;
-        }
-    }
-
+    std::string expr;
     for (char c : input) {
-        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
-            c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
-            c != '%' && c != '^' && c != '$') {
-            return ErrorCode::BadCharacter;  
+        if (!std::isspace(static_cast<unsigned char>(c))) {
+            expr.push_back(c);
         }
     }
 
-    std::istringstream iss(input);
-    double a = 0;
-    double b = 0;
-    char op = 0;
-
-    if (!(iss >> a >> op))
+    if (expr.empty())
         return ErrorCode::BadFormat;
 
-    if (operations.find(op) == operations.end()) {
-        return ErrorCode::BadCharacter;
+    for (char c : expr) {
+        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
+            c != '.' && c != '!' && c != '%' && c != '^' && c != '$') {
+            return ErrorCode::BadCharacter;
+        }
     }
 
-    if (op != '!') {
-        if (!(iss >> b))
-            return ErrorCode::BadFormat;
-    }
-
-    std::string rest;
-    if (std::getline(iss, rest)) {
-        for (char c : rest) {
-            if (!std::isspace(c)) {
+    char op = 0;
+    size_t opPos = std::string::npos;
+    for (size_t i = 0; i < expr.size(); ++i) {
+        char c = expr[i];
+        if (operations.count(c)) {
+            if (op != 0) {
                 return ErrorCode::BadFormat;
             }
+            op = c;
+            opPos = i;
         }
+    }
+
+    if (op == 0)
+        return ErrorCode::BadFormat;
+
+    double a = 0, b = 0;
+
+    try {
+        if (op == '!') {
+            a = std::stod(expr.substr(0, opPos));
+        } else {
+            a = std::stod(expr.substr(0, opPos));
+            b = std::stod(expr.substr(opPos + 1));
+        }
+    } catch (...) {
+        return ErrorCode::BadFormat;
     }
 
     return operations.at(op)(a, b, out);
 }
+
 
 ErrorCode process(const std::string& input, double* out) {
     AdvancedCalculator calc;
