@@ -89,7 +89,7 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // 1. Sprawdzenie nieprawidłowych znaków
+    // Sprawdzenie nieprawidłowych znaków
     for (char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
@@ -99,43 +99,53 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     }
 
     std::istringstream iss(input);
+    std::string token;
     double a = 0, b = 0;
     char op = 0;
 
-    // 2. Wczytanie pierwszej liczby
-    if (!(iss >> a))
+    // Wczytanie pierwszej liczby (ze znakiem + lub -)
+    if (!(iss >> token))
         return ErrorCode::BadFormat;
+    try {
+        a = std::stod(token);
+    } catch (...) {
+        return ErrorCode::BadFormat;
+    }
 
-    // 3. Wczytanie operatora
+    // Wczytanie operatora
     if (!(iss >> op))
         return ErrorCode::BadFormat;
-
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // 4. Wczytanie drugiej liczby, jeśli to nie jest '!'
-    if (op != '!') {
-        // Sprawdzenie, czy następny znak nie jest operatorem (podwójne operatory)
-        char next = iss.peek();
-        if (next == '+' || next == '-' || next == '*' || next == '/' ||
-            next == '%' || next == '^' || next == '$') {
-            return ErrorCode::BadFormat;
+    // W przypadku operatora "!" nie ma drugiej liczby
+    if (op == '!') {
+        std::string rest;
+        if (std::getline(iss, rest)) {
+            for (char c : rest)
+                if (!std::isspace(c))
+                    return ErrorCode::BadFormat;
         }
-
-        if (!(iss >> b))
-            return ErrorCode::BadFormat;
+        return operations.at(op)(a, 0, out);
     }
 
-    // 5. Sprawdzenie, czy nie ma dodatkowych nie-spacji znaków
+    // Wczytanie drugiej liczby
+    if (!(iss >> token))
+        return ErrorCode::BadFormat;
+    try {
+        b = std::stod(token);
+    } catch (...) {
+        return ErrorCode::BadFormat;
+    }
+
+    // Po drugiej liczbie nie może być nic poza spacjami
     std::string rest;
     if (std::getline(iss, rest)) {
-        for (char c : rest) {
+        for (char c : rest)
             if (!std::isspace(c))
                 return ErrorCode::BadFormat;
-        }
     }
 
-    // 6. Wywołanie odpowiedniej operacji
     return operations.at(op)(a, b, out);
 }
 
