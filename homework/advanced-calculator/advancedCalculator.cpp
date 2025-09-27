@@ -91,6 +91,10 @@ AdvancedCalculator::AdvancedCalculator() {
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     // 1. Sprawdź znaki
     for (char c : input) {
+        if (c == ',') {
+            // test 9 oczekuje BadFormat dla przecinka
+            return ErrorCode::BadFormat;
+        }
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
