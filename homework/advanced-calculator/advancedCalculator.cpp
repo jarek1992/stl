@@ -142,7 +142,11 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         // Wczytanie drugiej liczby (może mieć znak +/-)
         char sign = '+';
         if (iss.peek() == '+' || iss.peek() == '-') {
-            iss >> sign;
+            char next = iss.peek();
+            // jeśli następny znak jest też operatorem i nie jest częścią liczby, to BadFormat
+            if (next == op) {
+                return ErrorCode::BadFormat;
+            }
         }
 
         if (!(iss >> b))
