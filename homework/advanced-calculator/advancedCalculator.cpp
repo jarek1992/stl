@@ -89,72 +89,87 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    bool inNumber = false;
-    bool dotUsed = false;
+    enum class State { Start,
+                       Number,
+                       Operator };
+    State state = State::Start;
 
-    for (char c : input) {
-        if (std::isdigit(c)) {
-            inNumber = true;
-        } else if (c == '.') {
-            if (dotUsed) {
-                return ErrorCode::BadFormat;  // druga kropka w tej samej liczbie
-            }
-            dotUsed = true;
-            inNumber = true;
-        } else {
-            // zakończenie liczby → reset
-            if (inNumber) {
-                inNumber = false;
-                dotUsed = false;
-            }
-
-            if (c != '+' && c != '-' && c != '*' && c != '/' &&
-                c != '!' && c != ' ' && c != '(' && c != ')' &&
-                c != '%' && c != '^') {
-                return ErrorCode::BadCharacter;  // znak spoza listy
-            }
-        }
-    }
-
-    // 2. Przygotuj parser
-    std::istringstream iss(input);
     double a = 0, b = 0;
     char op = 0;
 
-    // liczba A
-    if (!(iss >> a))
+    std::istringstream iss(input);
+    std::string token;
+
+    // Wczytaj pierwszą liczbę (może mieć znak i kropkę)
+    if (!(iss >> token))
         return ErrorCode::BadFormat;
 
-    // operator
+    // Sprawdź format liczby
+    bool dotUsed = false;
+    for (size_t i = 0; i < token.size(); ++i) {
+        char c = token[i];
+        if (c == '.') {
+            if (dotUsed)
+                return ErrorCode::BadFormat;
+            dotUsed = true;
+        } else if (c == '+' || c == '-') {
+            if (i != 0)
+                return ErrorCode::BadFormat;  // znak tylko na początku
+        } else if (!std::isdigit(c)) {
+            return ErrorCode::BadCharacter;
+        }
+    }
+
+    try {
+        a = std::stod(token);
+    } catch (...) {
+        return ErrorCode::BadFormat;
+    }
+
+    // Wczytaj operator
     if (!(iss >> op))
         return ErrorCode::BadFormat;
 
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // liczba B (jeśli nie jest to operacja unarna)
+    // Operator jednoargumentowy (!) nie wymaga drugiej liczby
     if (op != '!') {
-        if (!(iss >> b))
+        if (!(iss >> token))
             return ErrorCode::BadFormat;
-    }
 
-    // 3. Specjalne reguły formatu
-    // przypadek: "+8 - 32.1" -> BadFormat (liczba zaczyna się od '+')
-    if (!input.empty() && input[0] == '+') {
-        return ErrorCode::BadFormat;
-    }
-
-    // sprawdź resztę (powinny być tylko spacje)
-    std::string rest;
-    if (std::getline(iss, rest)) {
-        for (char c : rest) {
-            if (!std::isspace(c)) {
-                return ErrorCode::BadFormat;
+        dotUsed = false;
+        for (size_t i = 0; i < token.size(); ++i) {
+            char c = token[i];
+            if (c == '.') {
+                if (dotUsed)
+                    return ErrorCode::BadFormat;
+                dotUsed = true;
+            } else if (c == '+' || c == '-') {
+                if (i != 0)
+                    return ErrorCode::BadFormat;
+            } else if (!std::isdigit(c)) {
+                return ErrorCode::BadCharacter;
             }
+        }
+
+        try {
+            b = std::stod(token);
+        } catch (...) {
+            return ErrorCode::BadFormat;
         }
     }
 
-    // 4. Wykonaj działanie
+    // Sprawdź, czy reszta strumienia jest pusta lub same spacje
+    std::string rest;
+    if (std::getline(iss, rest)) {
+        for (char c : rest) {
+            if (!std::isspace(c))
+                return ErrorCode::BadFormat;
+        }
+    }
+
+    // Wywołanie funkcji operacji
     return operations.at(op)(a, b, out);
 }
 
