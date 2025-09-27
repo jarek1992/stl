@@ -92,17 +92,14 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (!out)
         return ErrorCode::BadFormat;
 
-    // Sprawdzenie niedozwolonych znaków
+    // Sprawdzenie niedozwolonych znaków i przecinków
     for (char c : input) {
+        if (c == ',')
+            return ErrorCode::BadFormat;
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
         }
-    }
-
-    // Niedozwolone przecinki
-    if (input.find(',') != std::string::npos) {
-        return ErrorCode::BadFormat;
     }
 
     std::istringstream iss(input);
@@ -110,11 +107,14 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // Wczytanie pierwszej liczby wraz ze znakiem + lub -
+    // Wczytanie pierwszej liczby (z możliwym znakiem + lub -)
     if (!(iss >> token))
         return ErrorCode::BadFormat;
     try {
-        a = std::stod(token);
+        size_t pos;
+        a = std::stod(token, &pos);
+        if (pos != token.size())
+            return ErrorCode::BadFormat;  // np. "12.4.3"
     } catch (...) {
         return ErrorCode::BadFormat;
     }
@@ -126,7 +126,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return ErrorCode::BadCharacter;
 
     if (op == '!') {
-        // factorial – po nim nie może być nic poza spacjami
+        // Factorial – po nim nie może być nic oprócz spacji
         std::string rest;
         std::getline(iss, rest);
         for (char c : rest) {
@@ -136,32 +136,28 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return operations.at(op)(a, 0.0, out);
     }
 
-    // Wczytanie drugiej liczby wraz ze znakiem + lub -
+    // Wczytanie drugiej liczby (obsługa prefiksu + lub -)
     if (!(iss >> token))
         return ErrorCode::BadFormat;
 
-    // Obsługa sytuacji typu "--77.321" lub "+32.1"
-    if (token.size() > 1 && (token[0] == '+' || token[0] == '-') &&
-        (token[1] == '+' || token[1] == '-')) {
-        // podwójny operator, np. "++" lub "--"
-        // przekształcamy na pojedynczy znak: -- -> +, ++ -> +
-        int sign = 1;
-        for (char c : token) {
-            if (c == '-')
-                sign *= -1;
-        }
-        try {
-            b = std::stod(token.substr(token.find_first_of("0123456789.")));
-            b *= sign;
-        } catch (...) {
-            return ErrorCode::BadFormat;
-        }
-    } else {
-        try {
-            b = std::stod(token);
-        } catch (...) {
-            return ErrorCode::BadFormat;
-        }
+    // Obsługa podwójnych znaków, np. "--77.321", "++12.3"
+    int sign = 1;
+    while (!token.empty() && (token[0] == '+' || token[0] == '-')) {
+        if (token[0] == '-')
+            sign *= -1;
+        token.erase(0, 1);
+    }
+
+    if (token.empty())
+        return ErrorCode::BadFormat;
+
+    try {
+        size_t pos;
+        b = std::stod(token, &pos) * sign;
+        if (pos != token.size())
+            return ErrorCode::BadFormat;  // np. "12.4.3"
+    } catch (...) {
+        return ErrorCode::BadFormat;
     }
 
     // Sprawdzenie, czy po drugiej liczbie nie ma dodatkowych znaków
