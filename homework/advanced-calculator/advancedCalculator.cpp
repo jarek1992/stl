@@ -89,14 +89,16 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    for (char c : input) {
-        if (c == ',') {
-            return ErrorCode::BadFormat;
-        }
+    for (size_t i = 0; i < input.size(); ++i) {
+        char c = input[i];
+
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
+        }
+        if ((c == '+' || c == '-') && i == 0 && std::isdigit(input[i + 1])) {
+            return ErrorCode::BadFormat;
         }
     }
 
