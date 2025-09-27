@@ -117,21 +117,21 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // W przypadku operatorów binarnych
     if (op != '!') {
-        // Wczytanie drugiej liczby
-        if (!(iss >> b))
+        // wczytanie drugiej liczby
+        std::string token;
+        if (!(iss >> token))
             return ErrorCode::BadFormat;
 
-        // Sprawdzenie, czy po drugiej liczbie nie ma dodatkowych znaków (poza spacjami)
-        std::string rest;
-        std::getline(iss, rest);
-        for (char c : rest) {
-            if (!std::isspace(c))
-                return ErrorCode::BadFormat;
-        }
-    } else {
-        // Operator ! – po nim nie może być nic poza spacjami
+        // jeśli druga liczba zaczyna się od + lub -, traktujemy jako błąd formatu
+        if (token[0] == '+' || token[0] == '-')
+            return ErrorCode::BadFormat;
+
+        std::istringstream iss2(token);
+        if (!(iss2 >> b))
+            return ErrorCode::BadFormat;
+
+        // sprawdzamy resztę
         std::string rest;
         std::getline(iss, rest);
         for (char c : rest) {
