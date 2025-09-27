@@ -89,29 +89,40 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // Najpierw sprawdzamy przecinek – to zawsze BadFormat
-    if (input.find(',') != std::string::npos) {
+    if (!out) {
         return ErrorCode::BadFormat;
     }
 
-    // Sprawdzenie innych niedozwolonych znaków
+    bool hasComma = false;
+    bool hasOtherInvalid = false;
+
+    // Sprawdzanie niedozwolonych znaków
     for (char c : input) {
-        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
-            c != '.' && c != '!' && c != ' ' &&
-            c != '%' && c != '^' && c != '$') {
-            return ErrorCode::BadCharacter;
+        if (c == ',') {
+            hasComma = true;
+        } else if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' &&
+                   c != '/' && c != '.' && c != '!' && c != ' ' &&
+                   c != '%' && c != '^' && c != '$') {
+            hasOtherInvalid = true;
         }
+    }
+
+    if (hasOtherInvalid) {
+        return ErrorCode::BadCharacter;  // priorytet dla innych złych znaków
+    }
+    if (hasComma) {
+        return ErrorCode::BadFormat;  // tylko jeśli nie było innych złych znaków
     }
 
     std::istringstream iss(input);
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // Pierwsza liczba
+    // Wczytanie pierwszej liczby
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
-    // Operator
+    // Wczytanie operatora
     if (!(iss >> op))
         return ErrorCode::BadFormat;
 
@@ -119,7 +130,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return ErrorCode::BadCharacter;
 
     if (op == '!') {
-        // factorial – po nim już nic
+        // factorial – po nim nie powinno być nic
         std::string rest;
         std::getline(iss, rest);
         for (char c : rest) {
@@ -128,17 +139,26 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         }
         return operations.at(op)(a, 0.0, out);
     } else {
-        // druga liczba
+        // Wczytanie drugiej liczby (może mieć znak +/-)
+        char sign = '+';
+        if (iss.peek() == '+' || iss.peek() == '-') {
+            iss >> sign;
+        }
+
         if (!(iss >> b))
             return ErrorCode::BadFormat;
 
-        // po drugiej liczbie już nic poza spacjami
+        if (sign == '-')
+            b = -b;
+
+        // Po drugiej liczbie nie powinno być nic poza spacjami
         std::string rest;
         std::getline(iss, rest);
         for (char c : rest) {
             if (!std::isspace(c))
                 return ErrorCode::BadFormat;
         }
+
         return operations.at(op)(a, b, out);
     }
 }
