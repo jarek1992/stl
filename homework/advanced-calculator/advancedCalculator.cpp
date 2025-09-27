@@ -90,15 +90,17 @@ AdvancedCalculator::AdvancedCalculator() {
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     // Sprawdzenie niedozwolonych znaków
-    for (unsigned char c : input) {
+    for (char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' &&
             c != '%' && c != '^' && c != '$') {
-            // jeśli trafi się przecinek → BadFormat
-            if (c == ',')
-                return ErrorCode::BadFormat;
             return ErrorCode::BadCharacter;
         }
+    }
+
+    // Niedozwolone przecinki
+    if (input.find(',') != std::string::npos) {
+        return ErrorCode::BadFormat;
     }
 
     std::istringstream iss(input);
