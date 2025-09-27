@@ -119,11 +119,16 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
 
     // Operator binarny
     if (op != '!') {
-        if (!(iss >> b))
+        // Wczytanie drugiej liczby (uwzględnia znak +/-)
+        std::string token;
+        if (!(iss >> token))
+            return ErrorCode::BadFormat;
+        std::istringstream iss2(token);
+        if (!(iss2 >> b))
             return ErrorCode::BadFormat;
     }
 
-    // Sprawdzenie, czy po wczytaniu liczb nie ma dodatkowych znaków
+    // Sprawdzenie, czy po wczytaniu liczb nie ma dodatkowych znaków (poza spacjami)
     std::string rest;
     std::getline(iss, rest);
     for (char c : rest) {
