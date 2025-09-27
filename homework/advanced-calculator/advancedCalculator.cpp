@@ -89,48 +89,44 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    if (!out) {
+    if (!out)
         return ErrorCode::BadFormat;
-    }
 
-    bool hasComma = false;
-    bool hasOtherInvalid = false;
-
-    // Sprawdzanie niedozwolonych znaków
+    // Sprawdzenie niedozwolonych znaków
     for (char c : input) {
-        if (c == ',') {
-            hasComma = true;
-        } else if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' &&
-                   c != '/' && c != '.' && c != '!' && c != ' ' &&
-                   c != '%' && c != '^' && c != '$') {
-            hasOtherInvalid = true;
+        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
+            c != '.' && c != '!' && c != ' ' && c != '%' && c != '^' && c != '$') {
+            return ErrorCode::BadCharacter;
         }
     }
 
-    if (hasOtherInvalid) {
-        return ErrorCode::BadCharacter;  // priorytet dla innych złych znaków
-    }
-    if (hasComma) {
-        return ErrorCode::BadFormat;  // tylko jeśli nie było innych złych znaków
+    // Niedozwolone przecinki
+    if (input.find(',') != std::string::npos) {
+        return ErrorCode::BadFormat;
     }
 
     std::istringstream iss(input);
+    std::string token;
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // Wczytanie pierwszej liczby
-    if (!(iss >> a))
+    // Wczytanie pierwszej liczby wraz ze znakiem + lub -
+    if (!(iss >> token))
         return ErrorCode::BadFormat;
+    try {
+        a = std::stod(token);
+    } catch (...) {
+        return ErrorCode::BadFormat;
+    }
 
     // Wczytanie operatora
     if (!(iss >> op))
         return ErrorCode::BadFormat;
-
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
     if (op == '!') {
-        // factorial – po nim nie powinno być nic
+        // factorial – po nim nie może być nic poza spacjami
         std::string rest;
         std::getline(iss, rest);
         for (char c : rest) {
@@ -138,33 +134,45 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
                 return ErrorCode::BadFormat;
         }
         return operations.at(op)(a, 0.0, out);
-    } else {
-        // Wczytanie drugiej liczby (może mieć znak +/-)
-        char sign = '+';
-        if (iss.peek() == '+' || iss.peek() == '-') {
-            char next = iss.peek();
-            // jeśli następny znak jest też operatorem i nie jest częścią liczby, to BadFormat
-            if (next == op) {
-                return ErrorCode::BadFormat;
-            }
-        }
-
-        if (!(iss >> b))
-            return ErrorCode::BadFormat;
-
-        if (sign == '-')
-            b = -b;
-
-        // Po drugiej liczbie nie powinno być nic poza spacjami
-        std::string rest;
-        std::getline(iss, rest);
-        for (char c : rest) {
-            if (!std::isspace(c))
-                return ErrorCode::BadFormat;
-        }
-
-        return operations.at(op)(a, b, out);
     }
+
+    // Wczytanie drugiej liczby wraz ze znakiem + lub -
+    if (!(iss >> token))
+        return ErrorCode::BadFormat;
+
+    // Obsługa sytuacji typu "--77.321" lub "+32.1"
+    if (token.size() > 1 && (token[0] == '+' || token[0] == '-') &&
+        (token[1] == '+' || token[1] == '-')) {
+        // podwójny operator, np. "++" lub "--"
+        // przekształcamy na pojedynczy znak: -- -> +, ++ -> +
+        int sign = 1;
+        for (char c : token) {
+            if (c == '-')
+                sign *= -1;
+        }
+        try {
+            b = std::stod(token.substr(token.find_first_of("0123456789.")));
+            b *= sign;
+        } catch (...) {
+            return ErrorCode::BadFormat;
+        }
+    } else {
+        try {
+            b = std::stod(token);
+        } catch (...) {
+            return ErrorCode::BadFormat;
+        }
+    }
+
+    // Sprawdzenie, czy po drugiej liczbie nie ma dodatkowych znaków
+    std::string rest;
+    std::getline(iss, rest);
+    for (char c : rest) {
+        if (!std::isspace(c))
+            return ErrorCode::BadFormat;
+    }
+
+    return operations.at(op)(a, b, out);
 }
 
 ErrorCode process(const std::string& input, double* out) {
