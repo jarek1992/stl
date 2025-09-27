@@ -89,18 +89,18 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // Sprawdzenie niedozwolonych znaków
+    // Najpierw sprawdzamy przecinek – to zawsze BadFormat
+    if (input.find(',') != std::string::npos) {
+        return ErrorCode::BadFormat;
+    }
+
+    // Sprawdzenie innych niedozwolonych znaków
     for (char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' &&
             c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
         }
-    }
-
-    // Przecinek = zły format
-    if (input.find(',') != std::string::npos) {
-        return ErrorCode::BadFormat;
     }
 
     std::istringstream iss(input);
@@ -119,7 +119,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return ErrorCode::BadCharacter;
 
     if (op == '!') {
-        // factorial musi być ostatni w napisie
+        // factorial – po nim już nic
         std::string rest;
         std::getline(iss, rest);
         for (char c : rest) {
@@ -128,28 +128,17 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         }
         return operations.at(op)(a, 0.0, out);
     } else {
-        // Wczytanie drugiej liczby (może mieć + / -)
-        std::string token;
-        if (!(iss >> token))
+        // druga liczba
+        if (!(iss >> b))
             return ErrorCode::BadFormat;
 
-        // drugi operator od razu po pierwszym → BadFormat (np. "++", "^%")
-        if (token.size() > 1 && (token[0] == '+' || token[0] == '-') && (token[1] == '+' || token[1] == '-' || token[1] == '*' || token[1] == '/' || token[1] == '^' || token[1] == '%' || token[1] == '$' || token[1] == '!')) {
-            return ErrorCode::BadFormat;
-        }
-
-        std::istringstream iss2(token);
-        if (!(iss2 >> b))
-            return ErrorCode::BadFormat;
-
-        // sprawdź czy nie ma jeszcze czegoś po drugiej liczbie
+        // po drugiej liczbie już nic poza spacjami
         std::string rest;
         std::getline(iss, rest);
         for (char c : rest) {
             if (!std::isspace(c))
                 return ErrorCode::BadFormat;
         }
-
         return operations.at(op)(a, b, out);
     }
 }
