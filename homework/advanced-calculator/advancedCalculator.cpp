@@ -89,44 +89,54 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    for (size_t i = 0; i < input.size(); ++i) {
-        char c = input[i];
-
+    // 1. Sprawdź znaki
+    for (char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
         }
-        if ((c == '+' || c == '-') && i == 0 && std::isdigit(input[i + 1])) {
-            return ErrorCode::BadFormat;
-        }
     }
 
+    // 2. Przygotuj parser
     std::istringstream iss(input);
     double a = 0, b = 0;
     char op = 0;
 
+    // liczba A
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
+    // operator
     if (!(iss >> op))
         return ErrorCode::BadFormat;
+
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
+    // liczba B (jeśli nie jest to operacja unarna)
     if (op != '!') {
         if (!(iss >> b))
             return ErrorCode::BadFormat;
     }
 
+    // 3. Specjalne reguły formatu
+    // przypadek: "+8 - 32.1" -> BadFormat (liczba zaczyna się od '+')
+    if (!input.empty() && input[0] == '+') {
+        return ErrorCode::BadFormat;
+    }
+
+    // sprawdź resztę (powinny być tylko spacje)
     std::string rest;
     if (std::getline(iss, rest)) {
         for (char c : rest) {
-            if (!std::isspace(c))
+            if (!std::isspace(c)) {
                 return ErrorCode::BadFormat;
+            }
         }
     }
 
+    // 4. Wykonaj działanie
     return operations.at(op)(a, b, out);
 }
 
