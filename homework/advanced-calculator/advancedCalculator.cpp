@@ -89,16 +89,30 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // 1. Sprawdź znaki
+    bool inNumber = false;
+    bool dotUsed = false;
+
     for (char c : input) {
-        if (c == ',') {
-            // test 9 oczekuje BadFormat dla przecinka
-            return ErrorCode::BadFormat;
-        }
-        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
-            c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
-            c != '%' && c != '^' && c != '$') {
-            return ErrorCode::BadCharacter;
+        if (std::isdigit(c)) {
+            inNumber = true;
+        } else if (c == '.') {
+            if (dotUsed) {
+                return ErrorCode::BadFormat;  // druga kropka w tej samej liczbie
+            }
+            dotUsed = true;
+            inNumber = true;
+        } else {
+            // zakończenie liczby → reset
+            if (inNumber) {
+                inNumber = false;
+                dotUsed = false;
+            }
+
+            if (c != '+' && c != '-' && c != '*' && c != '/' &&
+                c != '!' && c != ' ' && c != '(' && c != ')' &&
+                c != '%' && c != '^') {
+                return ErrorCode::BadCharacter;  // znak spoza listy
+            }
         }
     }
 
