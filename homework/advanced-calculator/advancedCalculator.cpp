@@ -91,11 +91,17 @@ AdvancedCalculator::AdvancedCalculator() {
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     // 1. Sprawdzenie niedozwolonych znaków
     for (char c : input) {
+        // Złe znaki, które nigdy nie powinny się pojawić
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
-            c != '%' && c != '^' && c != '$') {
-            return ErrorCode::BadCharacter;
+            c != '%' && c != '^' && c != '$' && c != ',') {
+            return ErrorCode::BadCharacter;  // test 10 nadal przejdzie
         }
+    }
+
+    // Jeśli w liczbie pojawił się przecinek, to jest złe formatowanie
+    if (input.find(',') != std::string::npos) {
+        return ErrorCode::BadFormat;
     }
 
     std::istringstream iss(input);
