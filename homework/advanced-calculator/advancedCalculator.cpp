@@ -117,8 +117,22 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     }
 
     if (op != '!') {
-        if (!(iss >> b))
+        // Pobieramy pozycję w strumieniu, żeby sprawdzić pierwszy znak drugiej liczby
+        std::streampos pos = iss.tellg();
+        std::string remainder;
+        iss >> remainder;
+        if (remainder.empty()) {
             return ErrorCode::BadFormat;
+        }
+        // Jeśli druga liczba zaczyna się od + lub -, a nie jest częścią operatora, to błąd
+        if (remainder[0] == '+' || remainder[0] == '-') {
+            return ErrorCode::BadFormat;
+        }
+        // Wczytujemy drugą liczbę
+        std::istringstream iss2(remainder);
+        if (!(iss2 >> b)) {
+            return ErrorCode::BadFormat;
+        }
     }
 
     std::string rest;
