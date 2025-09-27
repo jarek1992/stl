@@ -89,76 +89,50 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    if (!out)
-        return ErrorCode::BadFormat;
-
-    std::string str;
-    for (char c : input) {
-        if (!std::isspace(c))
-            str += c;  // usuń wszystkie spacje
-    }
-
-    if (str.empty())
-        return ErrorCode::BadFormat;
-
-    // sprawdzenie niepoprawnych znaków
-    for (char c : str) {
-        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' &&
-            c != '/' && c != '.' && c != '!' &&
+    // Sprawdzenie niedozwolonych znaków
+    for (unsigned char c : input) {
+        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
+            c != '.' && c != '!' && c != ' ' &&
             c != '%' && c != '^' && c != '$') {
+            // jeśli trafi się przecinek → BadFormat
             if (c == ',')
                 return ErrorCode::BadFormat;
             return ErrorCode::BadCharacter;
         }
     }
 
-    // factorial specjalny przypadek
-    if (str.back() == '!') {
-        std::string left = str.substr(0, str.size() - 1);
-        if (left.empty())
-            return ErrorCode::BadFormat;
-
-        char* endptr = nullptr;
-        double a = std::strtod(left.c_str(), &endptr);
-        if (*endptr != '\0')
-            return ErrorCode::BadFormat;
-
-        return operations.at('!')(a, 0.0, out);
-    }
-
-    // szukamy operatora (poza znakiem pierwszej liczby)
-    size_t pos = 0;
-    if (str[0] == '+' || str[0] == '-')
-        pos = 1;
-
-    size_t opPos = std::string::npos;
+    std::istringstream iss(input);
+    double a = 0.0, b = 0.0;
     char op = 0;
-    for (; pos < str.size(); ++pos) {
-        if (operations.find(str[pos]) != operations.end()) {
-            opPos = pos;
-            op = str[pos];
-            break;
-        }
+
+    // Pierwsza liczba
+    if (!(iss >> a))
+        return ErrorCode::BadFormat;
+
+    // Operator
+    if (!(iss >> op))
+        return ErrorCode::BadFormat;
+    if (operations.find(op) == operations.end())
+        return ErrorCode::BadCharacter;
+
+    if (op != '!') {
+        // Druga liczba może mieć znak
+        std::string token;
+        if (!(iss >> token))
+            return ErrorCode::BadFormat;
+
+        std::istringstream iss2(token);
+        if (!(iss2 >> b))
+            return ErrorCode::BadFormat;
     }
 
-    if (opPos == std::string::npos)
-        return ErrorCode::BadFormat;
-
-    std::string left = str.substr(0, opPos);
-    std::string right = str.substr(opPos + 1);
-
-    if (left.empty() || right.empty())
-        return ErrorCode::BadFormat;
-
-    char* endptr = nullptr;
-    double a = std::strtod(left.c_str(), &endptr);
-    if (*endptr != '\0')
-        return ErrorCode::BadFormat;
-
-    double b = 0.0;
-    b = std::strtod(right.c_str(), &endptr);
-    if (*endptr != '\0')
-        return ErrorCode::BadFormat;
+    // Sprawdzenie reszty ciągu
+    std::string rest;
+    std::getline(iss, rest);
+    for (char c : rest) {
+        if (!std::isspace(c))
+            return ErrorCode::BadFormat;
+    }
 
     return operations.at(op)(a, b, out);
 }
