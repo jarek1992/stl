@@ -95,6 +95,9 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
             c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
         }
+        if (c == ',') {
+            return ErrorCode::BadFormat;
+        }
     }
 
     std::istringstream iss(input);
