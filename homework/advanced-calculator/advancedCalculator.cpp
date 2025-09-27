@@ -89,14 +89,16 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
+    // Sprawdzenie niedozwolonych znaków
     for (char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
-            c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
-            c != '%' && c != '^' && c != '$' && c != ',') {
+            c != '.' && c != '!' && c != ' ' &&
+            c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
         }
     }
 
+    // Niedozwolone przecinki
     if (input.find(',') != std::string::npos) {
         return ErrorCode::BadFormat;
     }
@@ -105,44 +107,39 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    if (!(iss >> a)) {
+    // Wczytanie pierwszej liczby
+    if (!(iss >> a))
         return ErrorCode::BadFormat;
-    }
-    if (!(iss >> op)) {
-        return ErrorCode::BadFormat;
-    }
 
-    if (operations.find(op) == operations.end()) {
+    // Wczytanie operatora
+    if (!(iss >> op))
+        return ErrorCode::BadFormat;
+    if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
-    }
 
+    // W przypadku operatorów binarnych
     if (op != '!') {
-        // Pobieramy pozycję w strumieniu, żeby sprawdzić pierwszy znak drugiej liczby
-        std::streampos pos = iss.tellg();
-        std::string remainder;
-        iss >> remainder;
-        if (remainder.empty()) {
+        // Wczytanie drugiej liczby
+        if (!(iss >> b))
             return ErrorCode::BadFormat;
+
+        // Sprawdzenie, czy po drugiej liczbie nie ma dodatkowych znaków (poza spacjami)
+        std::string rest;
+        std::getline(iss, rest);
+        for (char c : rest) {
+            if (!std::isspace(c))
+                return ErrorCode::BadFormat;
         }
-        // Jeśli druga liczba zaczyna się od + lub -, a nie jest częścią operatora, to błąd
-        if (remainder[0] == '+' || remainder[0] == '-') {
-            return ErrorCode::BadFormat;
-        }
-        // Wczytujemy drugą liczbę
-        std::istringstream iss2(remainder);
-        if (!(iss2 >> b)) {
-            return ErrorCode::BadFormat;
+    } else {
+        // Operator ! – po nim nie może być nic poza spacjami
+        std::string rest;
+        std::getline(iss, rest);
+        for (char c : rest) {
+            if (!std::isspace(c))
+                return ErrorCode::BadFormat;
         }
     }
 
-    std::string rest;
-    if (std::getline(iss, rest)) {
-        for (char c : rest) {
-            if (!std::isspace(c)) {
-                return ErrorCode::BadFormat;
-            }
-        }
-    }
     return operations.at(op)(a, b, out);
 }
 
