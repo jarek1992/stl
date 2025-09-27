@@ -90,13 +90,13 @@ AdvancedCalculator::AdvancedCalculator() {
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     for (char c : input) {
+        if (c == ',') {
+            return ErrorCode::BadFormat;
+        }
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
-        }
-        if (c == ',') {
-            return ErrorCode::BadFormat;
         }
     }
 
