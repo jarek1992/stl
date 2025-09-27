@@ -94,7 +94,10 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' &&
             c != '%' && c != '^' && c != '$') {
-            return (c == ',' ? ErrorCode::BadFormat : ErrorCode::BadCharacter);
+            // jeśli trafi się przecinek → BadFormat
+            if (c == ',')
+                return ErrorCode::BadFormat;
+            return ErrorCode::BadCharacter;
         }
     }
 
