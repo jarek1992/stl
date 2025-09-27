@@ -90,11 +90,11 @@ AdvancedCalculator::AdvancedCalculator() {
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     // Sprawdzenie niedozwolonych znaków
-    for (char c : input) {
+    for (unsigned char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' &&
             c != '%' && c != '^' && c != '$') {
-            return ErrorCode::BadCharacter;
+            return (c == ',' ? ErrorCode::BadFormat : ErrorCode::BadCharacter);
         }
     }
 
