@@ -89,17 +89,14 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // 1. Sprawdzenie niedozwolonych znaków
     for (char c : input) {
-        // Złe znaki, które nigdy nie powinny się pojawić
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
             c != '%' && c != '^' && c != '$' && c != ',') {
-            return ErrorCode::BadCharacter;  // test 10 nadal przejdzie
+            return ErrorCode::BadCharacter;
         }
     }
 
-    // Jeśli w liczbie pojawił się przecinek, to jest złe formatowanie
     if (input.find(',') != std::string::npos) {
         return ErrorCode::BadFormat;
     }
@@ -108,14 +105,10 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // 2. Wczytaj pierwszą liczbę (ze znakiem, jeśli jest na początku)
     if (!(iss >> a)) {
         return ErrorCode::BadFormat;
     }
-
-    // 3. Wczytaj operator
     if (!(iss >> op)) {
-        // Jeśli operator nie istnieje i jest końcem stringa, OK tylko dla '!'
         return ErrorCode::BadFormat;
     }
 
@@ -123,14 +116,11 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return ErrorCode::BadCharacter;
     }
 
-    // 4. Wczytaj drugą liczbę jeśli operator wymaga
     if (op != '!') {
-        if (!(iss >> b)) {
+        if (!(iss >> b))
             return ErrorCode::BadFormat;
-        }
     }
 
-    // 5. Sprawdzenie reszty stringa – tylko spacje są dozwolone
     std::string rest;
     if (std::getline(iss, rest)) {
         for (char c : rest) {
@@ -139,8 +129,6 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
             }
         }
     }
-
-    // 6. Wywołanie odpowiedniej funkcji operacji
     return operations.at(op)(a, b, out);
 }
 
