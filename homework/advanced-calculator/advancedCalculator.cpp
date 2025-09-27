@@ -89,87 +89,52 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    enum class State { Start,
-                       Number,
-                       Operator };
-    State state = State::Start;
-
-    double a = 0, b = 0;
-    char op = 0;
-
-    std::istringstream iss(input);
-    std::string token;
-
-    // Wczytaj pierwszą liczbę (może mieć znak i kropkę)
-    if (!(iss >> token))
-        return ErrorCode::BadFormat;
-
-    // Sprawdź format liczby
-    bool dotUsed = false;
-    for (size_t i = 0; i < token.size(); ++i) {
-        char c = token[i];
-        if (c == '.') {
-            if (dotUsed)
-                return ErrorCode::BadFormat;
-            dotUsed = true;
-        } else if (c == '+' || c == '-') {
-            if (i != 0)
-                return ErrorCode::BadFormat;  // znak tylko na początku
-        } else if (!std::isdigit(c)) {
+    // 1. Sprawdzenie niedozwolonych znaków
+    for (char c : input) {
+        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
+            c != '.' && c != '!' && c != ' ' && c != '(' && c != ')' &&
+            c != '%' && c != '^' && c != '$') {
             return ErrorCode::BadCharacter;
         }
     }
 
-    try {
-        a = std::stod(token);
-    } catch (...) {
+    std::istringstream iss(input);
+    double a = 0.0, b = 0.0;
+    char op = 0;
+
+    // 2. Wczytaj pierwszą liczbę (ze znakiem, jeśli jest na początku)
+    if (!(iss >> a)) {
         return ErrorCode::BadFormat;
     }
 
-    // Wczytaj operator
-    if (!(iss >> op))
+    // 3. Wczytaj operator
+    if (!(iss >> op)) {
+        // Jeśli operator nie istnieje i jest końcem stringa, OK tylko dla '!'
         return ErrorCode::BadFormat;
+    }
 
-    if (operations.find(op) == operations.end())
+    if (operations.find(op) == operations.end()) {
         return ErrorCode::BadCharacter;
+    }
 
-    // Operator jednoargumentowy (!) nie wymaga drugiej liczby
+    // 4. Wczytaj drugą liczbę jeśli operator wymaga
     if (op != '!') {
-        if (!(iss >> token))
-            return ErrorCode::BadFormat;
-
-        dotUsed = false;
-        for (size_t i = 0; i < token.size(); ++i) {
-            char c = token[i];
-            if (c == '.') {
-                if (dotUsed)
-                    return ErrorCode::BadFormat;
-                dotUsed = true;
-            } else if (c == '+' || c == '-') {
-                if (i != 0)
-                    return ErrorCode::BadFormat;
-            } else if (!std::isdigit(c)) {
-                return ErrorCode::BadCharacter;
-            }
-        }
-
-        try {
-            b = std::stod(token);
-        } catch (...) {
+        if (!(iss >> b)) {
             return ErrorCode::BadFormat;
         }
     }
 
-    // Sprawdź, czy reszta strumienia jest pusta lub same spacje
+    // 5. Sprawdzenie reszty stringa – tylko spacje są dozwolone
     std::string rest;
     if (std::getline(iss, rest)) {
         for (char c : rest) {
-            if (!std::isspace(c))
+            if (!std::isspace(c)) {
                 return ErrorCode::BadFormat;
+            }
         }
     }
 
-    // Wywołanie funkcji operacji
+    // 6. Wywołanie odpowiedniej funkcji operacji
     return operations.at(op)(a, b, out);
 }
 
