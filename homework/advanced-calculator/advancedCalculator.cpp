@@ -92,81 +92,73 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (!out)
         return ErrorCode::BadFormat;
 
-    // Sprawdzenie niedozwolonych znaków i przecinków
+    std::string str;
     for (char c : input) {
-        if (c == ',')
-            return ErrorCode::BadFormat;
-        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
-            c != '.' && c != '!' && c != ' ' && c != '%' && c != '^' && c != '$') {
+        if (!std::isspace(c))
+            str += c;  // usuń wszystkie spacje
+    }
+
+    if (str.empty())
+        return ErrorCode::BadFormat;
+
+    // sprawdzenie niepoprawnych znaków
+    for (char c : str) {
+        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' &&
+            c != '/' && c != '.' && c != '!' &&
+            c != '%' && c != '^' && c != '$') {
+            if (c == ',')
+                return ErrorCode::BadFormat;
             return ErrorCode::BadCharacter;
         }
     }
 
-    std::istringstream iss(input);
-    std::string token;
-    double a = 0.0, b = 0.0;
-    char op = 0;
-
-    // Wczytanie pierwszej liczby (z możliwym znakiem + lub -)
-    if (!(iss >> token))
-        return ErrorCode::BadFormat;
-    try {
-        size_t pos;
-        a = std::stod(token, &pos);
-        if (pos != token.size())
-            return ErrorCode::BadFormat;  // np. "12.4.3"
-    } catch (...) {
-        return ErrorCode::BadFormat;
-    }
-
-    // Wczytanie operatora
-    if (!(iss >> op))
-        return ErrorCode::BadFormat;
-    if (operations.find(op) == operations.end())
-        return ErrorCode::BadCharacter;
-
-    if (op == '!') {
-        // Factorial – po nim nie może być nic oprócz spacji
-        std::string rest;
-        std::getline(iss, rest);
-        for (char c : rest) {
-            if (!std::isspace(c))
-                return ErrorCode::BadFormat;
-        }
-        return operations.at(op)(a, 0.0, out);
-    }
-
-    // Wczytanie drugiej liczby (obsługa prefiksu + lub -)
-    if (!(iss >> token))
-        return ErrorCode::BadFormat;
-
-    // Obsługa podwójnych znaków, np. "--77.321", "++12.3"
-    int sign = 1;
-    while (!token.empty() && (token[0] == '+' || token[0] == '-')) {
-        if (token[0] == '-')
-            sign *= -1;
-        token.erase(0, 1);
-    }
-
-    if (token.empty())
-        return ErrorCode::BadFormat;
-
-    try {
-        size_t pos;
-        b = std::stod(token, &pos) * sign;
-        if (pos != token.size())
-            return ErrorCode::BadFormat;  // np. "12.4.3"
-    } catch (...) {
-        return ErrorCode::BadFormat;
-    }
-
-    // Sprawdzenie, czy po drugiej liczbie nie ma dodatkowych znaków
-    std::string rest;
-    std::getline(iss, rest);
-    for (char c : rest) {
-        if (!std::isspace(c))
+    // factorial specjalny przypadek
+    if (str.back() == '!') {
+        std::string left = str.substr(0, str.size() - 1);
+        if (left.empty())
             return ErrorCode::BadFormat;
+
+        char* endptr = nullptr;
+        double a = std::strtod(left.c_str(), &endptr);
+        if (*endptr != '\0')
+            return ErrorCode::BadFormat;
+
+        return operations.at('!')(a, 0.0, out);
     }
+
+    // szukamy operatora (poza znakiem pierwszej liczby)
+    size_t pos = 0;
+    if (str[0] == '+' || str[0] == '-')
+        pos = 1;
+
+    size_t opPos = std::string::npos;
+    char op = 0;
+    for (; pos < str.size(); ++pos) {
+        if (operations.find(str[pos]) != operations.end()) {
+            opPos = pos;
+            op = str[pos];
+            break;
+        }
+    }
+
+    if (opPos == std::string::npos)
+        return ErrorCode::BadFormat;
+
+    std::string left = str.substr(0, opPos);
+    std::string right = str.substr(opPos + 1);
+
+    if (left.empty() || right.empty())
+        return ErrorCode::BadFormat;
+
+    char* endptr = nullptr;
+    double a = std::strtod(left.c_str(), &endptr);
+    if (*endptr != '\0')
+        return ErrorCode::BadFormat;
+
+    double b = 0.0;
+    b = std::strtod(right.c_str(), &endptr);
+    if (*endptr != '\0')
+        return ErrorCode::BadFormat;
 
     return operations.at(op)(a, b, out);
 }
