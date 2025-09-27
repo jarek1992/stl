@@ -107,29 +107,28 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // Wczytanie pierwszej liczby
+    // Pierwsza liczba
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
-    // Wczytanie operatora
+    // Operator
     if (!(iss >> op))
         return ErrorCode::BadFormat;
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
     if (op != '!') {
-        // Wczytanie drugiej liczby (łącznie ze znakiem + lub -)
-        char sign = '+';
-        if (iss.peek() == '+' || iss.peek() == '-') {
-            iss >> sign;
-        }
-        if (!(iss >> b))
+        // Druga liczba może mieć znak
+        std::string token;
+        if (!(iss >> token))
             return ErrorCode::BadFormat;
-        if (sign == '-')
-            b = -b;
+
+        std::istringstream iss2(token);
+        if (!(iss2 >> b))
+            return ErrorCode::BadFormat;
     }
 
-    // Sprawdzenie, czy po operacji nie ma dodatkowych znaków
+    // Sprawdzenie reszty ciągu
     std::string rest;
     std::getline(iss, rest);
     for (char c : rest) {
