@@ -106,6 +106,10 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
+    if (!input.empty() && operations.count(input[0]) && input[0] != '!') {
+        return ErrorCode::BadFormat;  // wyrażenie nie może zaczynać się od operatora binarnego
+    }
+
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
