@@ -92,7 +92,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     // 1. Sprawdzenie niedozwolonych znaków
     for (char c : input) {
         if (!(std::isdigit(c) || c == '.' || c == ' ' ||
-              operations.count(c))) {
+              operations.count(c) || c == ',')) {
             return ErrorCode::BadCharacter;  // np. litery, średnik
         }
     }
