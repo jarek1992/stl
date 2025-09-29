@@ -22,6 +22,72 @@ std::string errorCodeToString(ErrorCode code) {
     }
 }
 
+// AdvancedCalculator::AdvancedCalculator() {
+//     operations['+'] = [](double a, double b, double* out) {
+//         *out = a + b;
+//         return ErrorCode::OK;
+//     };
+//     operations['-'] = [](double a, double b, double* out) {
+//         *out = a - b;
+//         return ErrorCode::OK;
+//     };
+//     operations['*'] = [](double a, double b, double* out) {
+//         *out = a * b;
+//         return ErrorCode::OK;
+//     };
+//     operations['/'] = [](double a, double b, double* out) {
+//         if (b == 0.0) {
+//             return ErrorCode::DivideBy0;
+//         }
+//         *out = a / b;
+//         return ErrorCode::OK;
+//     };
+//     operations['%'] = [](double a, double b, double* out) {
+//         if (std::floor(a) != a || std::floor(b) != b) {
+//             return ErrorCode::ModuleOfNonIntegerValue;
+//         } else if (b == 0.0) {
+//             return ErrorCode::DivideBy0;
+//         }
+//         *out = static_cast<long long>(a) % static_cast<long long>(b);
+//         return ErrorCode::OK;
+//     };
+//     operations['^'] = [](double a, double b, double* out) {
+//         *out = std::pow(a, b);
+//         return ErrorCode::OK;
+//     };
+//     operations['$'] = [](double a, double b, double* out) {
+//         if (a < 0) {
+//             return ErrorCode::SqrtOfNegativeNumber;
+//         }
+//         if (b == 0.0) {
+//             return ErrorCode::DivideBy0;
+//         } else if (a < 0 && static_cast<long long>(b) % 2 == 0) {
+//             return ErrorCode::SqrtOfNegativeNumber;
+//         }
+//         *out = std::pow(a, 1.0 / b);
+//         return ErrorCode::OK;
+//     };
+//     operations['!'] = [](double a, double, double* out) {
+//         if (std::isnan(a) || std::isinf(a)) {
+//             return ErrorCode::BadFormat;
+//         }
+//
+//         long double result = 1.0;
+//         double x = std::fabs(a);
+//
+//         if (x == std::floor(x)) {
+//             for (int i = 1; i <= static_cast<int>(x); ++i) {
+//                 result *= i;
+//             }
+//         } else {
+//             result = tgamma(x + 1);
+//         }
+//
+//         *out = (a < 0 ? -result : result);
+//         return ErrorCode::OK;
+//     };
+// }
+
 AdvancedCalculator::AdvancedCalculator() {
     operations['+'] = [](double a, double b, double* out) {
         *out = a + b;
@@ -36,18 +102,16 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['/'] = [](double a, double b, double* out) {
-        if (b == 0.0) {
+        if (b == 0.0)
             return ErrorCode::DivideBy0;
-        }
         *out = a / b;
         return ErrorCode::OK;
     };
     operations['%'] = [](double a, double b, double* out) {
-        if (std::floor(a) != a || std::floor(b) != b) {
-            return ErrorCode::ModuleOfNonIntegerValue;
-        } else if (b == 0.0) {
+        if (b == 0.0)
             return ErrorCode::DivideBy0;
-        }
+        if (std::floor(a) != a || std::floor(b) != b)
+            return ErrorCode::ModuleOfNonIntegerValue;
         *out = static_cast<long long>(a) % static_cast<long long>(b);
         return ErrorCode::OK;
     };
@@ -56,29 +120,23 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['$'] = [](double a, double b, double* out) {
-        if (a < 0) {
-            return ErrorCode::SqrtOfNegativeNumber;
-        }
-        if (b == 0.0) {
+        if (b == 0.0)
             return ErrorCode::DivideBy0;
-        } else if (a < 0 && static_cast<long long>(b) % 2 == 0) {
+        if (a < 0 && static_cast<long long>(b) % 2 == 0)
             return ErrorCode::SqrtOfNegativeNumber;
-        }
         *out = std::pow(a, 1.0 / b);
         return ErrorCode::OK;
     };
     operations['!'] = [](double a, double, double* out) {
-        if (std::isnan(a) || std::isinf(a)) {
+        if (std::isnan(a) || std::isinf(a))
             return ErrorCode::BadFormat;
-        }
 
         long double result = 1.0;
         double x = std::fabs(a);
 
         if (x == std::floor(x)) {
-            for (int i = 1; i <= static_cast<int>(x); ++i) {
+            for (int i = 1; i <= static_cast<int>(x); ++i)
                 result *= i;
-            }
         } else {
             result = tgamma(x + 1);
         }
@@ -92,14 +150,23 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // 1. Sprawdzenie niedozwolonych znaków
+    // 0. Sprawdzenie pierwszego nie-spacji znaku
+    size_t firstPos = input.find_first_not_of(' ');
+    if (firstPos != std::string::npos) {
+        char firstChar = input[firstPos];
+        if (operations.count(firstChar) && firstChar != '!') {
+            return ErrorCode::BadFormat;  // np. "+8 - 32.1"
+        }
+    }
+
+    // 1. Sprawdzenie niedozwolonych znaków (cyfry, '.', spacje i operatory)
     for (char c : input) {
         if (!(std::isdigit(c) || c == '.' || std::isspace(c) || operations.count(c))) {
             return ErrorCode::BadCharacter;
         }
     }
 
-    // 2. Sprawdzenie przecinka
+    // 2. Sprawdzenie przecinka w liczbach
     if (input.find(',') != std::string::npos)
         return ErrorCode::BadFormat;
 
