@@ -89,7 +89,9 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // Sprawdzenie niedozwolonych znaków
+    if (input.find(',') != std::string::npos) {
+        return ErrorCode::BadFormat;
+    }
     for (char c : input) {
         if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
             c != '.' && c != '!' && c != ' ' &&
@@ -98,27 +100,19 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         }
     }
 
-    // Niedozwolone przecinki
-    if (input.find(',') != std::string::npos) {
-        return ErrorCode::BadFormat;
-    }
-
     std::istringstream iss(input);
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // Pierwsza liczba
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
-    // Operator
     if (!(iss >> op))
         return ErrorCode::BadFormat;
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
     if (op != '!') {
-        // Druga liczba może mieć znak
         std::string token;
         if (!(iss >> token))
             return ErrorCode::BadFormat;
@@ -128,14 +122,12 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
             return ErrorCode::BadFormat;
     }
 
-    // Sprawdzenie reszty ciągu
     std::string rest;
     std::getline(iss, rest);
     for (char c : rest) {
         if (!std::isspace(c))
             return ErrorCode::BadFormat;
     }
-
     return operations.at(op)(a, b, out);
 }
 
