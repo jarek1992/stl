@@ -89,14 +89,15 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
+    // 1. Sprawdzenie niedozwolonych znaków
     for (char c : input) {
         if (!(std::isdigit(c) || c == '.' || c == ' ' ||
-              operations.count(c) || c == ',')) {
-            return ErrorCode::BadCharacter;  // np. litery, średnik itd.
+              operations.count(c))) {
+            return ErrorCode::BadCharacter;  // np. litery, średnik
         }
     }
 
-    // 2. Sprawdzenie przecinka
+    // 2. Sprawdzenie przecinka w liczbach
     if (input.find(',') != std::string::npos) {
         return ErrorCode::BadFormat;  // np. 5,1!
     }
@@ -108,28 +109,37 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
-    if (!(iss >> op))
-        return ErrorCode::BadFormat;
-    if (operations.find(op) == operations.end())
-        return ErrorCode::BadCharacter;
-
-    if (op != '!') {
-        std::string token;
-        if (!(iss >> token))
-            return ErrorCode::BadFormat;
-
-        std::istringstream iss2(token);
-        if (!(iss2 >> b))
-            return ErrorCode::BadFormat;
+    if (!(iss >> op)) {
+        // tylko jedna liczba, np. dla silni unarnej
+        *out = a;
+        return ErrorCode::OK;
     }
 
+    if (operations.find(op) == operations.end()) {
+        return ErrorCode::BadCharacter;
+    }
+
+    if (op == '!') {
+        // factorial nie wymaga drugiej liczby
+        std::string leftover;
+        if (iss >> leftover)
+            return ErrorCode::BadFormat;  // np. "5! 2"
+        return operations['!'](a, 0, out);
+    }
+
+    // dla operatorów binarnych
+    if (!(iss >> b))
+        return ErrorCode::BadFormat;
+
+    // sprawdzamy, czy po liczbie nie ma dodatkowych znaków
     std::string rest;
     std::getline(iss, rest);
     for (char c : rest) {
         if (!std::isspace(c))
             return ErrorCode::BadFormat;
     }
-    return operations.at(op)(a, b, out);
+
+    return operations[op](a, b, out);
 }
 
 ErrorCode process(const std::string& input, double* out) {
