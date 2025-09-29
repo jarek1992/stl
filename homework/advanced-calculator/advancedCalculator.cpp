@@ -92,7 +92,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // 1. Sprawdzenie niedozwolonych znaków (tylko cyfry, '.', spacje i znaki operacji)
+    // 1. Sprawdzenie niedozwolonych znaków
     for (char c : input) {
         if (!(std::isdigit(c) || c == '.' || std::isspace(c) || operations.count(c))) {
             return ErrorCode::BadCharacter;
@@ -107,35 +107,34 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // 3. Wczytanie pierwszej liczby (nie może zaczynać się od operatora binarnego)
-    char firstChar = input.find_first_not_of(' ');
-    if (firstChar != std::string::npos && operations.count(input[firstChar]) && input[firstChar] != '!') {
-        return ErrorCode::BadFormat;
-    }
-
+    // 3. Wczytanie pierwszej liczby
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
+    // 4. Wczytanie operatora
     if (!(iss >> op)) {
+        // tylko jedna liczba → OK (np. "42")
         *out = a;
         return ErrorCode::OK;
     }
 
+    // 5. Sprawdzenie, czy operator jest znany
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // 4. Operator unarny !
+    // 6. Operator unarny !
     if (op == '!') {
         std::string leftover;
         if (iss >> leftover)
-            return ErrorCode::BadFormat;
+            return ErrorCode::BadFormat;  // np. "5! 2"
         return operations['!'](a, 0, out);
     }
 
-    // 5. Operator binarny
+    // 7. Operator binarny
     if (!(iss >> b))
-        return ErrorCode::BadFormat;
+        return ErrorCode::BadFormat;  // np. "+ 2"
 
+    // 8. Sprawdzenie dodatkowych znaków po drugiej liczbie
     std::string rest;
     std::getline(iss, rest);
     for (char c : rest) {
@@ -143,6 +142,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
             return ErrorCode::BadFormat;
     }
 
+    // 9. Wywołanie odpowiedniej operacji
     return operations[op](a, b, out);
 }
 
