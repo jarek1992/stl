@@ -89,38 +89,55 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    std::string s;
+    // 1. Sprawdzenie niedozwolonych znaków
     for (char c : input) {
-        if (!std::isdigit(c) && c != '.' && c != ' ' && operations.count(c) == 0) {
-            if (c == ',')
-                return ErrorCode::BadFormat;
-            return ErrorCode::BadCharacter;
+        if (!(std::isdigit(c) || c == '.' || c == ' ' ||
+              operations.count(c))) {
+            return ErrorCode::BadCharacter;  // np. litery, średnik
         }
-        s += c;
     }
 
-    std::istringstream iss(s);
+
+    // 2. Sprawdzenie przecinka w liczbach
+    if (input.find(',') != std::string::npos) {
+        return ErrorCode::BadFormat;  // np. 5,1!
+    }
+
+    std::istringstream iss(input);
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // Niepoprawny początkowy operator
-    if (s[0] == '+' || s[0] == '-' || s[0] == '*' || s[0] == '/' ||
-        s[0] == '%' || s[0] == '^' || s[0] == '$' || s[0] == '!') {
+     if (input[0] == '+' || input[0] == '-' || input[0] == '*' || input[0] == '/' ||
+        input[0] == '%' || input[0] == '^' || input[0] == '$' || input[0] == '!') {
         return ErrorCode::BadFormat;
     }
 
     if (!(iss >> a))
         return ErrorCode::BadFormat;
-    if (!(iss >> op))
-        return ErrorCode::BadFormat;
-    if (operations.find(op) == operations.end())
-        return ErrorCode::BadCharacter;
 
-    if (op != '!') {
-        if (!(iss >> b))
-            return ErrorCode::BadFormat;
+    if (!(iss >> op)) {
+        // tylko jedna liczba, np. dla silni unarnej
+        *out = a;
+        return ErrorCode::OK;
     }
 
+    if (operations.find(op) == operations.end()) {
+        return ErrorCode::BadCharacter;
+    }
+
+    if (op == '!') {
+        // factorial nie wymaga drugiej liczby
+        std::string leftover;
+        if (iss >> leftover)
+            return ErrorCode::BadFormat;  // np. "5! 2"
+        return operations['!'](a, 0, out);
+    }
+
+    // dla operatorów binarnych
+    if (!(iss >> b))
+        return ErrorCode::BadFormat;
+
+    // sprawdzamy, czy po liczbie nie ma dodatkowych znaków
     std::string rest;
     std::getline(iss, rest);
     for (char c : rest) {
