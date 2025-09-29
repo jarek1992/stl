@@ -89,15 +89,16 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    if (input.find(',') != std::string::npos) {
-        return ErrorCode::BadFormat;
-    }
     for (char c : input) {
-        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
-            c != '.' && c != '!' && c != ' ' &&
-            c != '%' && c != '^' && c != '$') {
-            return ErrorCode::BadCharacter;
+        if (!(std::isdigit(c) || c == '.' || c == ' ' ||
+              operations.count(c) || c == ',')) {
+            return ErrorCode::BadCharacter;  // np. litery, średnik itd.
         }
+    }
+
+    // 2. Sprawdzenie przecinka
+    if (input.find(',') != std::string::npos) {
+        return ErrorCode::BadFormat;  // np. 5,1!
     }
 
     std::istringstream iss(input);
