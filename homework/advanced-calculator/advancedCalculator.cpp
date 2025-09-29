@@ -89,17 +89,16 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // 1. Sprawdzenie niedozwolonych znaków
-    for (char c : input) {
-        if (!(std::isdigit(c) || c == '.' || c == ' ' ||
-              operations.count(c))) {
-            return ErrorCode::BadCharacter;  // np. litery, średnik
-        }
+    // 1. Sprawdzenie przecinka w liczbach
+    if (input.find(',') != std::string::npos) {
+        return ErrorCode::BadFormat;
     }
 
-    // 2. Sprawdzenie przecinka w liczbach
-    if (input.find(',') != std::string::npos) {
-        return ErrorCode::BadFormat;  // np. 5,1!
+    // 2. Sprawdzenie niedozwolonych znaków
+    for (char c : input) {
+        if (!(std::isdigit(c) || c == '.' || c == ' ' || operations.count(c))) {
+            return ErrorCode::BadCharacter;
+        }
     }
 
     std::istringstream iss(input);
@@ -123,7 +122,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         // factorial nie wymaga drugiej liczby
         std::string leftover;
         if (iss >> leftover)
-            return ErrorCode::BadFormat;  // np. "5! 2"
+            return ErrorCode::BadFormat;
         return operations['!'](a, 0, out);
     }
 
