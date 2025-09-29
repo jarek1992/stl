@@ -97,7 +97,6 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         }
     }
 
-
     // 2. Sprawdzenie przecinka w liczbach
     if (input.find(',') != std::string::npos) {
         return ErrorCode::BadFormat;  // np. 5,1!
@@ -106,11 +105,6 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     std::istringstream iss(input);
     double a = 0.0, b = 0.0;
     char op = 0;
-
-     if (input[0] == '+' || input[0] == '-' || input[0] == '*' || input[0] == '/' ||
-        input[0] == '%' || input[0] == '^' || input[0] == '$' || input[0] == '!') {
-        return ErrorCode::BadFormat;
-    }
 
     if (!(iss >> a))
         return ErrorCode::BadFormat;
