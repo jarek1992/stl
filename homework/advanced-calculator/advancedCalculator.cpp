@@ -89,48 +89,38 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    // 1. Sprawdzenie przecinka w liczbach
-    if (input.find(',') != std::string::npos) {
-        return ErrorCode::BadFormat;
-    }
-
-    // 2. Sprawdzenie niedozwolonych znaków
+    std::string s;
     for (char c : input) {
-        if (!(std::isdigit(c) || c == '.' || c == ' ' || operations.count(c))) {
+        if (!std::isdigit(c) && c != '.' && c != ' ' && operations.count(c) == 0) {
+            if (c == ',')
+                return ErrorCode::BadFormat;
             return ErrorCode::BadCharacter;
         }
+        s += c;
     }
 
-    std::istringstream iss(input);
+    std::istringstream iss(s);
     double a = 0.0, b = 0.0;
     char op = 0;
 
+    // Niepoprawny początkowy operator
+    if (s[0] == '+' || s[0] == '-' || s[0] == '*' || s[0] == '/' ||
+        s[0] == '%' || s[0] == '^' || s[0] == '$' || s[0] == '!') {
+        return ErrorCode::BadFormat;
+    }
+
     if (!(iss >> a))
         return ErrorCode::BadFormat;
-
-    if (!(iss >> op)) {
-        // tylko jedna liczba, np. dla silni unarnej
-        *out = a;
-        return ErrorCode::OK;
-    }
-
-    if (operations.find(op) == operations.end()) {
-        return ErrorCode::BadCharacter;
-    }
-
-    if (op == '!') {
-        // factorial nie wymaga drugiej liczby
-        std::string leftover;
-        if (iss >> leftover)
-            return ErrorCode::BadFormat;
-        return operations['!'](a, 0, out);
-    }
-
-    // dla operatorów binarnych
-    if (!(iss >> b))
+    if (!(iss >> op))
         return ErrorCode::BadFormat;
+    if (operations.find(op) == operations.end())
+        return ErrorCode::BadCharacter;
 
-    // sprawdzamy, czy po liczbie nie ma dodatkowych znaków
+    if (op != '!') {
+        if (!(iss >> b))
+            return ErrorCode::BadFormat;
+    }
+
     std::string rest;
     std::getline(iss, rest);
     for (char c : rest) {
