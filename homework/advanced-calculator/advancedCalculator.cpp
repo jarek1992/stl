@@ -107,7 +107,12 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // Wczytanie pierwszej liczby (może mieć prefiks + lub -)
+    iss >> std::ws;
+    if (iss.peek() == '+') {
+        return ErrorCode::BadFormat;
+    }
+
+    // Wczytanie pierwszej liczby (może mSieć prefiks + lub -)
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
