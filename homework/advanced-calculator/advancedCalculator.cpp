@@ -94,7 +94,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
 
     // 1. Sprawdzenie niedozwolonych znaków
     for (char c : input) {
-        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
+        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || c == ',' || operations.count(c))) {
             return ErrorCode::BadCharacter;
         }
     }
