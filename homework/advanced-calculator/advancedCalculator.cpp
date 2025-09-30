@@ -151,10 +151,6 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     }
     b = std::stod(tokenB);
 
-    // Operator binarny
-    if (!(iss >> b))
-        return ErrorCode::BadFormat;
-
     // Sprawdzenie dodatkowych znaków po drugiej liczbie
     std::string rest;
     std::getline(iss, rest);
