@@ -125,8 +125,8 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
 
     if (!(iss >> tokenA) || !isValidNumber(tokenA)) {
         return ErrorCode::BadFormat;
-        a = std::stod(tokenA);
     }
+    a = std::stod(tokenA);
 
     // Wczytanie operatora
     if (!(iss >> op)) {
@@ -148,8 +148,8 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
 
     if (!(iss >> tokenB) || !isValidNumber(tokenB)) {
         return ErrorCode::BadFormat;
-        b = std::stod(tokenB);
     }
+    b = std::stod(tokenB);
 
     // Operator binarny
     if (!(iss >> b))
