@@ -103,18 +103,30 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.find(',') != std::string::npos)
         return ErrorCode::BadFormat;
 
+    auto isValidNumber = [](const std::string& token) {
+        int dotCount = 0;
+        for (size_t i = 0; i < token.size(); ++i) {
+            char c = token[i];
+            if (c == '.') {
+                dotCount++;
+                if (dotCount > 1)
+                    return false;  // za dużo kropek
+            } else if (!std::isdigit(c) && !(i == 0 && (c == '-' || c == '+'))) {
+                return false;  // niedozwolony znak
+            }
+        }
+        return true;
+    };
+
     std::istringstream iss(input);
+    std::string tokenA, tokenB;
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    iss >> std::ws;
-    if (iss.peek() == '+') {
+    if (!(iss >> tokenA) || !isValidNumber(tokenA)) {
         return ErrorCode::BadFormat;
+        a = std::stod(tokenA);
     }
-
-    // Wczytanie pierwszej liczby (może mSieć prefiks + lub -)
-    if (!(iss >> a))
-        return ErrorCode::BadFormat;
 
     // Wczytanie operatora
     if (!(iss >> op)) {
@@ -132,6 +144,11 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         if (iss >> leftover)
             return ErrorCode::BadFormat;  // np. "5! 2"
         return operations['!'](a, 0, out);
+    }
+
+    if (!(iss >> tokenB) || !isValidNumber(tokenB)) {
+        return ErrorCode::BadFormat;
+        b = std::stod(tokenB);
     }
 
     // Operator binarny
