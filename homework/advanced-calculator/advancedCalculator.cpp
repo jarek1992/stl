@@ -92,66 +92,53 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // 1. Sprawdzenie niedozwolonych znaków
+    // 0. Sprawdzenie, czy pierwszy nie-spacja znak nie jest operatorem binarnym
+    size_t firstPos = input.find_first_not_of(' ');
+    if (firstPos != std::string::npos) {
+        char firstChar = input[firstPos];
+        if (operations.count(firstChar) && firstChar != '!') {
+            return ErrorCode::BadFormat;  // np. "+8 - 32" jest złym formatem
+        }
+    }
+
+    // 1. Sprawdzenie niedozwolonych znaków (cyfry, spacje, '.', operatory)
     for (char c : input) {
-        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || c == ',' || operations.count(c))) {
+        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
             return ErrorCode::BadCharacter;
         }
     }
 
-    // 2. Sprawdzenie przecinka (jeśli są tylko cyfry i operator, ale zawiera ',')
-    if (input.find(',') != std::string::npos)
-        return ErrorCode::BadFormat;
-
-    auto isValidNumber = [](const std::string& token) {
-        int dotCount = 0;
-        for (size_t i = 0; i < token.size(); ++i) {
-            char c = token[i];
-            if (c == '.') {
-                dotCount++;
-                if (dotCount > 1)
-                    return false;  // za dużo kropek
-            } else if (!std::isdigit(c) && !(i == 0 && (c == '-' || c == '+'))) {
-                return false;  // niedozwolony znak
-            }
-        }
-        return true;
-    };
-
     std::istringstream iss(input);
-    std::string tokenA, tokenB;
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    if (!(iss >> tokenA) || !isValidNumber(tokenA)) {
+    // 2. Wczytanie pierwszej liczby
+    if (!(iss >> a))
         return ErrorCode::BadFormat;
-    }
-    a = std::stod(tokenA);
 
-    // Wczytanie operatora
+    // 3. Wczytanie operatora (jeśli jest)
     if (!(iss >> op)) {
         *out = a;  // tylko jedna liczba → OK
         return ErrorCode::OK;
     }
 
-    // Sprawdzenie, czy operator jest znany
+    // 4. Sprawdzenie, czy operator jest obsługiwany
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // Operator unarny !
+    // 5. Operator unarny !
     if (op == '!') {
         std::string leftover;
         if (iss >> leftover)
-            return ErrorCode::BadFormat;  // np. "5! 2"
+            return ErrorCode::BadFormat;
         return operations['!'](a, 0, out);
     }
 
-    if (!(iss >> tokenB) || !isValidNumber(tokenB)) {
+    // 6. Operator binarny – wczytanie drugiej liczby
+    if (!(iss >> b))
         return ErrorCode::BadFormat;
-    }
-    b = std::stod(tokenB);
 
-    // Sprawdzenie dodatkowych znaków po drugiej liczbie
+    // 7. Sprawdzenie dodatkowych znaków po drugiej liczbie
     std::string rest;
     std::getline(iss, rest);
     for (char c : rest) {
@@ -159,6 +146,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
             return ErrorCode::BadFormat;
     }
 
+    // 8. Wywołanie operacji
     return operations[op](a, b, out);
 }
 
