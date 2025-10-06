@@ -92,21 +92,32 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
+    // sprawdzenie niedozwolonych znaków
+    for (char c : input) {
+        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
+            return ErrorCode::BadCharacter;
+        }
+    }
+
     std::istringstream iss(input);
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // Wczytaj pierwszą liczbę
+    // pierwsza liczba
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
-    // Wczytaj operator
+    // operator
     if (!(iss >> op)) {
-        *out = a;
-        return ErrorCode::OK;  // tylko jedna liczba
+        *out = a;  // tylko liczba
+        return ErrorCode::OK;
     }
 
-    // Operator unarny
+    // nieznany operator
+    if (operations.find(op) == operations.end())
+        return ErrorCode::BadCharacter;
+
+    // operator unarny
     if (op == '!') {
         std::string extra;
         if (iss >> extra)
@@ -114,20 +125,16 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return operations['!'](a, 0, out);
     }
 
-    // Wczytaj drugą liczbę
+    // druga liczba
     if (!(iss >> b))
         return ErrorCode::BadFormat;
 
-    // Sprawdź, czy operator jest poprawny
-    if (operations.find(op) == operations.end())
-        return ErrorCode::BadCharacter;
-
-    // Sprawdź, czy nie ma śmieci po drugiej liczbie
+    // sprawdź, czy po drugiej liczbie coś jeszcze jest
     std::string rest;
     if (iss >> rest)
         return ErrorCode::BadFormat;
 
-    // Wykonaj operację
+    // oblicz wynik
     return operations[op](a, b, out);
 }
 
