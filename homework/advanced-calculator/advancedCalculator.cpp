@@ -94,6 +94,8 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
 
     // sprawdzenie niedozwolonych znaków
     for (char c : input) {
+        if (c == ',')
+            return ErrorCode::BadFormat;  // przecinek to błąd formatu, nie znak
         if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
             return ErrorCode::BadCharacter;
         }
