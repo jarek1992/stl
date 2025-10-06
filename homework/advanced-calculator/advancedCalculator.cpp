@@ -95,17 +95,27 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     for (size_t i = 0; i < input.size(); ++i) {
         char c = input[i];
 
-        if (c == ',') {
-            return ErrorCode::BadFormat;  // przecinek = błąd formatu
+        // Zakazane znaki → BadCharacter
+        if (c == ',' || c == ';' || (!std::isdigit(c) && !std::isspace(c) && c != '.' && !operations.count(c))) {
+            return ErrorCode::BadCharacter;
         }
 
-        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
-            return ErrorCode::BadCharacter;  // np. ';', '#' itp.
+        // Zły format: więcej niż jedna kropka w liczbie
+        if (c == '.') {
+            // sprawdzamy, czy w aktualnej liczbie jest już kropka
+            int dotCount = 0;
+            // szukamy wstecz aż do operatora lub początku
+            for (int j = i - 1; j >= 0 && (std::isdigit(input[j]) || input[j] == '.'); --j) {
+                if (input[j] == '.')
+                    dotCount++;
+            }
+            if (dotCount >= 1) {
+                return ErrorCode::BadFormat;  // druga kropka → zły format liczby
+            }
         }
 
-        // jeśli '+' występuje na początku liczby (np. "+8")
+        // '+' na początku liczby → BadFormat
         if (c == '+' && (i == 0 || std::isspace(input[i - 1]))) {
-            // jeśli po '+' jest cyfra, to to jest zły format
             if (i + 1 < input.size() && std::isdigit(input[i + 1])) {
                 return ErrorCode::BadFormat;
             }
