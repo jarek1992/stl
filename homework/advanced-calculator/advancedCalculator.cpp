@@ -92,50 +92,42 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // Sprawdzenie niedozwolonych znaków
-    for (char c : input) {
-        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
-            return ErrorCode::BadCharacter;
-        }
-    }
-
     std::istringstream iss(input);
-    std::string tokenA, tokenB;
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // pierwsza liczba
-    if (!(iss >> tokenA))
+    // Wczytaj pierwszą liczbę
+    if (!(iss >> a))
         return ErrorCode::BadFormat;
-    a = std::stod(tokenA);
 
-    // operator
+    // Wczytaj operator
     if (!(iss >> op)) {
         *out = a;
         return ErrorCode::OK;  // tylko jedna liczba
     }
 
-    if (operations.find(op) == operations.end())
-        return ErrorCode::BadCharacter;
-
-    // factorial (!)
+    // Operator unarny
     if (op == '!') {
-        std::string leftover;
-        if (iss >> leftover)
-            return ErrorCode::BadFormat;
+        std::string extra;
+        if (iss >> extra)
+            return ErrorCode::BadFormat;  // np. "5! 2"
         return operations['!'](a, 0, out);
     }
 
-    // druga liczba
-    if (!(iss >> tokenB))
+    // Wczytaj drugą liczbę
+    if (!(iss >> b))
         return ErrorCode::BadFormat;
-    b = std::stod(tokenB);
 
-    // brak śmieci po liczbie
+    // Sprawdź, czy operator jest poprawny
+    if (operations.find(op) == operations.end())
+        return ErrorCode::BadCharacter;
+
+    // Sprawdź, czy nie ma śmieci po drugiej liczbie
     std::string rest;
     if (iss >> rest)
         return ErrorCode::BadFormat;
 
+    // Wykonaj operację
     return operations[op](a, b, out);
 }
 
