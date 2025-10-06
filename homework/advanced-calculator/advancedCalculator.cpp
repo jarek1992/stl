@@ -92,12 +92,23 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // sprawdzenie niedozwolonych znaków
-    for (char c : input) {
-        if (c == ',')
-            return ErrorCode::BadFormat;  // przecinek to błąd formatu, nie znak
+    for (size_t i = 0; i < input.size(); ++i) {
+        char c = input[i];
+
+        if (c == ',') {
+            return ErrorCode::BadFormat;  // przecinek = błąd formatu
+        }
+
         if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
-            return ErrorCode::BadCharacter;
+            return ErrorCode::BadCharacter;  // np. ';', '#' itp.
+        }
+
+        // jeśli '+' występuje na początku liczby (np. "+8")
+        if (c == '+' && (i == 0 || std::isspace(input[i - 1]))) {
+            // jeśli po '+' jest cyfra, to to jest zły format
+            if (i + 1 < input.size() && std::isdigit(input[i + 1])) {
+                return ErrorCode::BadFormat;
+            }
         }
     }
 
