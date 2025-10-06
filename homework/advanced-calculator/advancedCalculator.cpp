@@ -92,16 +92,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // 0. Sprawdzenie, czy pierwszy nie-spacja znak nie jest operatorem binarnym
-    size_t firstPos = input.find_first_not_of(' ');
-    if (firstPos != std::string::npos) {
-        char firstChar = input[firstPos];
-        if (operations.count(firstChar) && firstChar != '!') {
-            return ErrorCode::BadFormat;  // np. "+8 - 32" jest złym formatem
-        }
-    }
-
-    // 1. Sprawdzenie niedozwolonych znaków (cyfry, spacje, '.', operatory)
+    // Sprawdzenie niedozwolonych znaków
     for (char c : input) {
         if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
             return ErrorCode::BadCharacter;
@@ -109,24 +100,25 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     }
 
     std::istringstream iss(input);
+    std::string tokenA, tokenB;
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // 2. Wczytanie pierwszej liczby
-    if (!(iss >> a))
+    // pierwsza liczba
+    if (!(iss >> tokenA))
         return ErrorCode::BadFormat;
+    a = std::stod(tokenA);
 
-    // 3. Wczytanie operatora (jeśli jest)
+    // operator
     if (!(iss >> op)) {
-        *out = a;  // tylko jedna liczba → OK
-        return ErrorCode::OK;
+        *out = a;
+        return ErrorCode::OK;  // tylko jedna liczba
     }
 
-    // 4. Sprawdzenie, czy operator jest obsługiwany
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // 5. Operator unarny !
+    // factorial (!)
     if (op == '!') {
         std::string leftover;
         if (iss >> leftover)
@@ -134,19 +126,16 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return operations['!'](a, 0, out);
     }
 
-    // 6. Operator binarny – wczytanie drugiej liczby
-    if (!(iss >> b))
+    // druga liczba
+    if (!(iss >> tokenB))
+        return ErrorCode::BadFormat;
+    b = std::stod(tokenB);
+
+    // brak śmieci po liczbie
+    std::string rest;
+    if (iss >> rest)
         return ErrorCode::BadFormat;
 
-    // 7. Sprawdzenie dodatkowych znaków po drugiej liczbie
-    std::string rest;
-    std::getline(iss, rest);
-    for (char c : rest) {
-        if (!std::isspace(c))
-            return ErrorCode::BadFormat;
-    }
-
-    // 8. Wywołanie operacji
     return operations[op](a, b, out);
 }
 
