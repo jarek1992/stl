@@ -89,13 +89,23 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
+    std::string trimmed = input;
+    trimmed.erase(0, trimmed.find_first_not_of(" \t"));
+    if (!trimmed.empty() && operations.count(trimmed[0]) && trimmed[0] != '-' && trimmed[0] != '+') {
+        return ErrorCode::BadFormat;
+    }
+    // jeśli zaczyna się od '+' lub '-', musi być liczba po nim
+    if ((trimmed[0] == '+' || trimmed[0] == '-') && (trimmed.size() == 1 || !std::isdigit(trimmed[1]))) {
+        return ErrorCode::BadFormat;
+    }
+
     if (input.empty())
         return ErrorCode::BadFormat;
 
     for (size_t i = 0; i < input.size(); ++i) {
         char c = input[i];
 
-        // --- Przecinek: BadFormat jeśli w liczbie, BadCharacter jeśli poza nią ---
+        // Przecinek — zależnie od kontekstu
         if (c == ',') {
             bool beforeIsDigit = (i > 0 && std::isdigit(input[i - 1]));
             bool afterIsDigit = (i + 1 < input.size() && std::isdigit(input[i + 1]));
@@ -105,7 +115,7 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
                 return ErrorCode::BadCharacter;  // np. "123,4 ; 345"
         }
 
-        // --- Zły znak ---
+        // Inne niepoprawne znaki
         if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
             return ErrorCode::BadCharacter;
         }
