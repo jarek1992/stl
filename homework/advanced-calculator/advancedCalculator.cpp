@@ -91,11 +91,9 @@ AdvancedCalculator::AdvancedCalculator() {
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     std::string trimmed = input;
     trimmed.erase(0, trimmed.find_first_not_of(" \t"));
-    if (!trimmed.empty() && operations.count(trimmed[0]) && trimmed[0] != '-' && trimmed[0] != '+') {
-        return ErrorCode::BadFormat;
-    }
-    // jeśli zaczyna się od '+' lub '-', musi być liczba po nim
-    if ((trimmed[0] == '+' || trimmed[0] == '-') && (trimmed.size() == 1 || !std::isdigit(trimmed[1]))) {
+
+    // Jeśli wyrażenie zaczyna się od operatora (np. "+8 - 32.1"), uznaj to za błąd formatu
+    if (!trimmed.empty() && operations.count(trimmed[0])) {
         return ErrorCode::BadFormat;
     }
 
