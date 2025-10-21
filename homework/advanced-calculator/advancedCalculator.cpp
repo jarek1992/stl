@@ -88,12 +88,74 @@ AdvancedCalculator::AdvancedCalculator() {
     };
 }
 
+// ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
+//     if (input.empty())
+//         return ErrorCode::BadFormat;
+//
+//     // sprawdzenie niedozwolonych znaków
+//     for (char c : input) {
+//         if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
+//             return ErrorCode::BadCharacter;
+//         }
+//     }
+//
+//     std::istringstream iss(input);
+//     double a = 0.0, b = 0.0;
+//     char op = 0;
+//
+//     // pierwsza liczba
+//     if (!(iss >> a))
+//         return ErrorCode::BadFormat;
+//
+//     // operator
+//     if (!(iss >> op)) {
+//         *out = a;  // tylko liczba
+//         return ErrorCode::OK;
+//     }
+//
+//     // nieznany operator
+//     if (operations.find(op) == operations.end())
+//         return ErrorCode::BadCharacter;
+//
+//     // operator unarny
+//     if (op == '!') {
+//         std::string extra;
+//         if (iss >> extra)
+//             return ErrorCode::BadFormat;  // np. "5! 2"
+//         return operations['!'](a, 0, out);
+//     }
+//
+//     // druga liczba
+//     if (!(iss >> b))
+//         return ErrorCode::BadFormat;
+//
+//     // sprawdź, czy po drugiej liczbie coś jeszcze jest
+//     std::string rest;
+//     if (iss >> rest)
+//         return ErrorCode::BadFormat;
+//
+//     // oblicz wynik
+//     return operations[op](a, b, out);
+// }
+
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // sprawdzenie niedozwolonych znaków
-    for (char c : input) {
+    // sprawdzenie niedozwolonych znaków i złych formatów liczbowych
+    for (size_t i = 0; i < input.size(); ++i) {
+        char c = input[i];
+
+        if (c == ',') {
+            // przecinek między cyframi -> zły format
+            bool beforeDigit = (i > 0 && std::isdigit(input[i - 1]));
+            bool afterDigit = (i + 1 < input.size() && std::isdigit(input[i + 1]));
+            if (beforeDigit && afterDigit)
+                return ErrorCode::BadFormat;
+            else
+                return ErrorCode::BadCharacter;
+        }
+
         if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
             return ErrorCode::BadCharacter;
         }
@@ -103,13 +165,17 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // pierwsza liczba
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
-    // operator
+    // przypadek: liczba zawiera więcej niż jedną kropkę (np. "12.4.3")
+    std::string check = std::to_string(a);
+    size_t dotCount = std::count(input.begin(), input.end(), '.');
+    if (dotCount > 1 && input.find_first_of("+-*/%^$!") != std::string::npos)
+        return ErrorCode::BadFormat;
+
     if (!(iss >> op)) {
-        *out = a;  // tylko liczba
+        *out = a;
         return ErrorCode::OK;
     }
 
@@ -117,24 +183,30 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // operator unarny
+    // operator unarny (!)
     if (op == '!') {
         std::string extra;
         if (iss >> extra)
-            return ErrorCode::BadFormat;  // np. "5! 2"
+            return ErrorCode::BadFormat;  // np. "123.4 ! 345"
         return operations['!'](a, 0, out);
     }
 
-    // druga liczba
+    // dwuznakowe operatory, np. ++ lub ^%
+    char nextChar = 0;
+    if (iss >> std::ws && iss.peek() != EOF) {
+        nextChar = iss.peek();
+        if (operations.count(nextChar) && nextChar != '-')  // drugi operator po operatorze
+            return ErrorCode::BadFormat;
+    }
+
     if (!(iss >> b))
         return ErrorCode::BadFormat;
 
-    // sprawdź, czy po drugiej liczbie coś jeszcze jest
+    // coś jeszcze po drugiej liczbie
     std::string rest;
     if (iss >> rest)
         return ErrorCode::BadFormat;
 
-    // oblicz wynik
     return operations[op](a, b, out);
 }
 
