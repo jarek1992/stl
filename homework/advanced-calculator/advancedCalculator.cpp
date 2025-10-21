@@ -1,5 +1,4 @@
 ﻿#include "advancedCalculator.hpp"
-#include <cctype>
 #include <cmath>
 #include <sstream>
 
@@ -23,9 +22,18 @@ std::string errorCodeToString(ErrorCode code) {
 }
 
 AdvancedCalculator::AdvancedCalculator() {
-    operations['+'] = [](double a, double b, double* out) { *out = a + b; return ErrorCode::OK; };
-    operations['-'] = [](double a, double b, double* out) { *out = a - b; return ErrorCode::OK; };
-    operations['*'] = [](double a, double b, double* out) { *out = a * b; return ErrorCode::OK; };
+    operations['+'] = [](double a, double b, double* out) {
+        *out = a + b;
+        return ErrorCode::OK;
+    };
+    operations['-'] = [](double a, double b, double* out) {
+        *out = a - b;
+        return ErrorCode::OK;
+    };
+    operations['*'] = [](double a, double b, double* out) {
+        *out = a * b;
+        return ErrorCode::OK;
+    };
     operations['/'] = [](double a, double b, double* out) {
         if (b == 0.0)
             return ErrorCode::DivideBy0;
@@ -44,6 +52,14 @@ AdvancedCalculator::AdvancedCalculator() {
         *out = std::pow(a, b);
         return ErrorCode::OK;
     };
+    operations['$'] = [](double a, double b, double* out) {
+        if (b == 0.0)
+            return ErrorCode::DivideBy0;
+        if (a < 0 && std::floor(b) == b && static_cast<int>(b) % 2 == 0)
+            return ErrorCode::SqrtOfNegativeNumber;
+        *out = std::pow(a, 1.0 / b);
+        return ErrorCode::OK;
+    };
     operations['!'] = [](double a, double, double* out) {
         if (a < 0.0 || std::floor(a) != a)
             return ErrorCode::BadFormat;
@@ -51,15 +67,6 @@ AdvancedCalculator::AdvancedCalculator() {
         for (int i = 1; i <= static_cast<int>(a); ++i)
             result *= i;
         *out = result;
-        return ErrorCode::OK;
-    };
-
-    operations['$'] = [](double a, double b, double* out) {
-        if (b == 0.0)
-            return ErrorCode::DivideBy0;
-        if (a < 0 && std::floor(b) == b && static_cast<int>(b) % 2 == 0)
-            return ErrorCode::SqrtOfNegativeNumber;
-        *out = std::pow(a, 1.0 / b);
         return ErrorCode::OK;
     };
 }
@@ -103,8 +110,8 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
         return ErrorCode::BadCharacter;
 
     if (op == '!') {
-        std::string rest;
-        if (iss >> rest)
+        std::string extra;
+        if (iss >> extra)
             return ErrorCode::BadFormat;
         return operations['!'](a, 0, out);
     }
