@@ -44,23 +44,22 @@ AdvancedCalculator::AdvancedCalculator() {
         *out = std::pow(a, b);
         return ErrorCode::OK;
     };
+    operations['!'] = [](double a, double, double* out) {
+        if (a < 0.0 || std::floor(a) != a)
+            return ErrorCode::BadFormat;
+        long double result = 1;
+        for (int i = 1; i <= static_cast<int>(a); ++i)
+            result *= i;
+        *out = result;
+        return ErrorCode::OK;
+    };
+
     operations['$'] = [](double a, double b, double* out) {
         if (b == 0.0)
             return ErrorCode::DivideBy0;
         if (a < 0 && std::floor(b) == b && static_cast<int>(b) % 2 == 0)
             return ErrorCode::SqrtOfNegativeNumber;
         *out = std::pow(a, 1.0 / b);
-        return ErrorCode::OK;
-    };
-    operations['!'] = [](double a, double, double* out) {
-        if (a < 0.0)
-            return ErrorCode::BadFormat;
-        if (a != std::floor(a))
-            return ErrorCode::BadFormat;
-        long double result = 1;
-        for (int i = 1; i <= static_cast<int>(a); ++i)
-            result *= i;
-        *out = result;
         return ErrorCode::OK;
     };
 }
