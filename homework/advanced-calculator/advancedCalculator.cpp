@@ -1,5 +1,4 @@
 ﻿#include "advancedCalculator.hpp"
-#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <sstream>
@@ -48,7 +47,7 @@ AdvancedCalculator::AdvancedCalculator() {
     operations['$'] = [](double a, double b, double* out) {
         if (b == 0.0)
             return ErrorCode::DivideBy0;
-        if (a < 0 && std::fmod(b, 2) == 0)
+        if (a < 0 && std::floor(b) == b && static_cast<int>(b) % 2 == 0)
             return ErrorCode::SqrtOfNegativeNumber;
         *out = std::pow(a, 1.0 / b);
         return ErrorCode::OK;
@@ -56,14 +55,8 @@ AdvancedCalculator::AdvancedCalculator() {
     operations['!'] = [](double a, double, double* out) {
         if (a < 0.0)
             return ErrorCode::BadFormat;
-        if (a == 0.0 || a == 1.0) {
-            *out = 1;
-            return ErrorCode::OK;
-        }
-        if (a != std::floor(a)) {
-            *out = std::tgamma(a + 1);
-            return ErrorCode::OK;
-        }
+        if (a != std::floor(a))
+            return ErrorCode::BadFormat;
         long double result = 1;
         for (int i = 1; i <= static_cast<int>(a); ++i)
             result *= i;
@@ -76,20 +69,23 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // wykrycie nieprawidłowych znaków lub przecinków
+    std::string trimmed = input;
+    trimmed.erase(0, trimmed.find_first_not_of(" \t"));
+    if (!trimmed.empty() && trimmed[0] == '+')
+        return ErrorCode::BadFormat;
+
     for (size_t i = 0; i < input.size(); ++i) {
         char c = input[i];
         if (c == ',') {
             bool beforeDigit = (i > 0 && std::isdigit(input[i - 1]));
             bool afterDigit = (i + 1 < input.size() && std::isdigit(input[i + 1]));
             if (beforeDigit && afterDigit)
-                return ErrorCode::BadFormat;  // np. "5,1"
+                return ErrorCode::BadFormat;
             else
-                return ErrorCode::BadCharacter;  // np. "5, + 2"
+                return ErrorCode::BadCharacter;
         }
-        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
+        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c)))
             return ErrorCode::BadCharacter;
-        }
     }
 
     std::istringstream iss(input);
@@ -117,7 +113,6 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (!(iss >> b))
         return ErrorCode::BadFormat;
 
-    // dodatkowe operatory po drugiej liczbie
     std::string rest;
     if (iss >> rest)
         return ErrorCode::BadFormat;
