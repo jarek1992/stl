@@ -92,9 +92,9 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    // 1. Sprawdzenie niedozwolonych znaków (tylko znaki niebędące cyframi, kropką, spacją lub operatorem)
+    // sprawdzenie niedozwolonych znaków
     for (char c : input) {
-        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c) || c == '-' || c == '+')) {
+        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c))) {
             return ErrorCode::BadCharacter;
         }
     }
@@ -103,77 +103,38 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double a = 0.0, b = 0.0;
     char op = 0;
 
-    // 2. Wczytanie pierwszej liczby
-    std::string tokenA;
-    if (!(iss >> tokenA))
+    // pierwsza liczba
+    if (!(iss >> a))
         return ErrorCode::BadFormat;
 
-    // Sprawdzenie liczby pod kątem wielu kropek
-    int dotCount = 0;
-    for (size_t i = 0; i < tokenA.size(); ++i) {
-        if (tokenA[i] == '.')
-            dotCount++;
-        if (dotCount > 1)
-            return ErrorCode::BadFormat;
-        if (!std::isdigit(tokenA[i]) && !(i == 0 && (tokenA[i] == '-' || tokenA[i] == '+')) && tokenA[i] != '.') {
-            return ErrorCode::BadFormat;
-        }
-    }
-
-    // Zamiana string na double
-    try {
-        a = std::stod(tokenA);
-    } catch (...) {
-        return ErrorCode::BadFormat;
-    }
-
-    // 3. Wczytanie operatora
+    // operator
     if (!(iss >> op)) {
-        *out = a;  // tylko jedna liczba → OK
+        *out = a;  // tylko liczba
         return ErrorCode::OK;
     }
 
-    // Nieznany operator
+    // nieznany operator
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
-    // Operator unarny !
+    // operator unarny
     if (op == '!') {
-        std::string leftover;
-        if (iss >> leftover)
+        std::string extra;
+        if (iss >> extra)
             return ErrorCode::BadFormat;  // np. "5! 2"
         return operations['!'](a, 0, out);
     }
 
-    // 4. Wczytanie drugiej liczby
-    std::string tokenB;
-    if (!(iss >> tokenB))
+    // druga liczba
+    if (!(iss >> b))
         return ErrorCode::BadFormat;
 
-    // Sprawdzenie drugiej liczby pod kątem wielu kropek
-    dotCount = 0;
-    for (size_t i = 0; i < tokenB.size(); ++i) {
-        if (tokenB[i] == '.')
-            dotCount++;
-        if (dotCount > 1)
-            return ErrorCode::BadFormat;
-        if (!std::isdigit(tokenB[i]) && !(i == 0 && (tokenB[i] == '-' || tokenB[i] == '+')) && tokenB[i] != '.') {
-            return ErrorCode::BadFormat;
-        }
-    }
-
-    try {
-        b = std::stod(tokenB);
-    } catch (...) {
-        return ErrorCode::BadFormat;
-    }
-
-    // 5. Sprawdzenie dodatkowych znaków po drugiej liczbie
+    // sprawdź, czy po drugiej liczbie coś jeszcze jest
     std::string rest;
     if (iss >> rest)
         return ErrorCode::BadFormat;
 
-    // 6. Obliczenie wyniku
+    // oblicz wynik
     return operations[op](a, b, out);
 }
 
