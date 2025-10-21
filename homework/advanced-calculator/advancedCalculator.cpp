@@ -75,54 +75,79 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     if (input.empty())
         return ErrorCode::BadFormat;
 
-    std::string trimmed = input;
-    trimmed.erase(0, trimmed.find_first_not_of(" \t"));
-    if (!trimmed.empty() && trimmed[0] == '+')
-        return ErrorCode::BadFormat;
-
+    // --- sprawdzenie znaków ---
+    int dotCount = 0;
     for (size_t i = 0; i < input.size(); ++i) {
         char c = input[i];
+
         if (c == ',') {
             bool beforeDigit = (i > 0 && std::isdigit(input[i - 1]));
             bool afterDigit = (i + 1 < input.size() && std::isdigit(input[i + 1]));
             if (beforeDigit && afterDigit)
-                return ErrorCode::BadFormat;
-            else
-                return ErrorCode::BadCharacter;
-        }
-        if (!(std::isdigit(c) || std::isspace(c) || c == '.' || operations.count(c)))
+                return ErrorCode::BadFormat;  // np. "5,1!"
             return ErrorCode::BadCharacter;
+        }
+
+        if (c == '.') {
+            dotCount++;
+            if (dotCount > 1)
+                return ErrorCode::BadFormat;  // np. "12.4.3"
+        } else if (!std::isdigit(c) && !std::isspace(c) && !operations.count(c)) {
+            dotCount = 0;
+            if (c != '.')
+                return ErrorCode::BadCharacter;
+        } else if (std::isspace(c)) {
+            dotCount = 0;
+        }
     }
 
+    // --- parser ---
     std::istringstream iss(input);
     double a = 0.0, b = 0.0;
     char op = 0;
 
+    // pierwsza liczba
     if (!(iss >> a))
         return ErrorCode::BadFormat;
 
+    // operator
     if (!(iss >> op)) {
         *out = a;
         return ErrorCode::OK;
     }
 
+    // nieznany operator
     if (operations.find(op) == operations.end())
         return ErrorCode::BadCharacter;
 
+    // silnia
     if (op == '!') {
+        if (a < 0.0 || std::floor(a) != a)
+            return ErrorCode::BadFormat;
         std::string extra;
         if (iss >> extra)
             return ErrorCode::BadFormat;
         return operations['!'](a, 0, out);
     }
 
+    // druga liczba
     if (!(iss >> b))
         return ErrorCode::BadFormat;
 
+    // po drugiej liczbie nie może być nic więcej
     std::string rest;
     if (iss >> rest)
         return ErrorCode::BadFormat;
 
+    // pierwiastkowanie ujemnych liczb
+    if (op == '$') {
+        if (a < 0 && std::floor(b) == b && static_cast<int>(b) % 2 == 0)
+            return ErrorCode::SqrtOfNegativeNumber;
+        if (b == 0.0)
+            return ErrorCode::DivideBy0;
+    }
+
+    // obliczenie wyniku
     return operations[op](a, b, out);
 }
 
