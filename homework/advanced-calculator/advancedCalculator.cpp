@@ -61,6 +61,7 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['!'] = [](double a, double, double* out) {
+        // Wersja dla int
         if (std::floor(a) == a) {
             long double result = 1;
             for (int i = 1; i <= static_cast<int>(std::abs(a)); ++i) {
@@ -69,7 +70,8 @@ AdvancedCalculator::AdvancedCalculator() {
             *out = std::copysign(result, a);
             return ErrorCode::OK;
         } else {
-            double result = std::tgamma(a + 1);
+            // Wersja dla real
+            double result = std::tgamma(std::abs(a) + 1);
             *out = std::copysign(result, a);
             return ErrorCode::OK;
         }
@@ -77,22 +79,21 @@ AdvancedCalculator::AdvancedCalculator() {
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
-    if (input.empty()) {
+    if (input.empty())
         return ErrorCode::BadFormat;
-    }
 
+    // 1. Sprawdz czy są znaki spoza dozwolonych
     for (size_t i = 0; i < input.size(); ++i) {
         char c = input[i];
 
-        bool const is_valid_character = std::isdigit(c) ||
-                                        std::isspace(c) ||
-                                        c == ',' || c == '.' ||
+        // Warunki
+        // 1. Jeśli jest to znak spoza zezwolonych, wyrzuć odpowiedni błąd
+        bool const is_valid_character = std::isdigit(c) or
+                                        std::isspace(c) or
+                                        c == ',' or c == '.' or
                                         (operations.count(c) > 0);
-        std::isspace(c) ||
-            c == ',' || c == '.' ||
-            (operations.count(c) > 0);
 
-        if (!is_valid_character) {
+        if (not is_valid_character) {
             return ErrorCode::BadCharacter;
         }
     }
@@ -115,17 +116,18 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
             if (dotCount > 1) {
                 return ErrorCode::BadFormat;  // np. "12.4.3"
             }
-        } else if (std::isspace(c) || (operations.count(c) > 0)) {
+        } else if (std::isspace(c) or (operations.count(c) > 0)) {
             dotCount = 0;
         }
     }
 
+    // 3. Sprawdz czy pierwszy znak to liczba lub minus do liczby
     for (size_t i = 0; i < input.size(); ++i) {
         // Skip until meaningful input
         if (std::isspace(input[i]))
             continue;
         // Correct input
-        if (std::isdigit(input[i]) || input[i] == '-')
+        if (std::isdigit(input[i]) or input[i] == '-')
             break;
         return ErrorCode::BadFormat;
     }
@@ -152,10 +154,12 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     // silnia
     if (op == '!') {
         std::string extra;
-        if (iss >> extra)
+        if (iss >> extra) {
             return ErrorCode::BadFormat;
+        }
+
+        return operations['!'](a, 0, out);
     }
-    return operations['!'](a, 0, out);
 
     // druga liczba
     if (!(iss >> b))
