@@ -1,4 +1,4 @@
-﻿#include <cmath>
+﻿﻿#include <cmath>
 #include <sstream>
 
 #include "advancedCalculator.hpp"
@@ -43,10 +43,10 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['%'] = [](double a, double b, double* out) {
-        if (b == 0.0) {
-            return ErrorCode::DivideBy0;
-        } else if (static_cast<long long>(a) != a || static_cast<long long>(b) != b) {
+        if (std::floor(a) != a || std::floor(b) != b) {
             return ErrorCode::ModuleOfNonIntegerValue;
+        } else if (b == 0.0) {
+            return ErrorCode::DivideBy0;
         }
         *out = static_cast<long long>(a) % static_cast<long long>(b);
         return ErrorCode::OK;
@@ -56,6 +56,9 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['$'] = [](double a, double b, double* out) {
+        if (a < 0) {
+            return ErrorCode::SqrtOfNegativeNumber;
+        }
         if (b == 0.0) {
             return ErrorCode::DivideBy0;
         } else if (a < 0 && static_cast<long long>(b) % 2 == 0) {
@@ -65,19 +68,31 @@ AdvancedCalculator::AdvancedCalculator() {
         return ErrorCode::OK;
     };
     operations['!'] = [](double a, double, double* out) {
-        *out = std::tgamma(a + 1);
+        if (std::isnan(a) || std::isinf(a)) {
+            return ErrorCode::BadFormat;
+        }
+
+        bool negative = a < 0;
+        double x = std::fabs(a);
+        double result = 1;
+
+        if (x == std::floor(x)) {
+            for (int i = 1; i <= static_cast<int>(x); ++i) {
+                result *= i;
+            }
+        } else {
+            result = tgamma(x + 1);
+        }
+
+        *out = negative ? -result : result;
         return ErrorCode::OK;
     };
 }
 
 ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     for (char c : input) {
-        if (c == ',') {
-            return ErrorCode::BadFormat;  // tylko '.' jako separator dziesiętny
-        }
-        if (!(std::isdigit(c) || c == '.' || c == '+' || c == '-' ||
-              c == '*' || c == '/' || c == '^' || c == '%' || c == '$' ||
-              c == '!' || std::isspace(static_cast<unsigned char>(c)))) {
+        if (!std::isdigit(c) && c != '+' && c != '-' && c != '*' && c != '/' &&
+            c != '.' && c != '!' && c != ' ' && c != '(' && c != ')') {
             return ErrorCode::BadCharacter;
         }
     }
@@ -87,29 +102,24 @@ ErrorCode AdvancedCalculator::process(const std::string& input, double* out) {
     double b = 0;
     char op = 0;
 
-    iss >> a;  // pierwsza liczba
-    if (!iss) {
+    iss >> a >> op;
+    if (!iss || operations.find(op) == operations.end()) {
         return ErrorCode::BadFormat;
     }
 
-    iss >> op;  // operator
-    if (!iss || operations.find(op) == operations.end()) {
-        return ErrorCode::BadCharacter;
-    }
-
-    if (op == '!') {
-        // silnia tylko dla liczb całkowitych >= 0
-        if (a < 0 || static_cast<long long>(a) != a) {
-            return ErrorCode::BadFormat;
-        }
-        return operations.at(op)(a, 0, out);
-    } else {
-        iss >> b;  // druga liczba
+    if (op != '!') {
+        iss >> b;
         if (!iss) {
             return ErrorCode::BadFormat;
         }
-        return operations.at(op)(a, b, out);
     }
+
+    char extra;
+    if (iss >> extra) {
+        return ErrorCode::BadCharacter;
+    }
+
+    return operations.at(op)(a, b, out);
 }
 
 ErrorCode process(const std::string& input, double* out) {
