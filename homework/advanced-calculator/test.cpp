@@ -1,11 +1,13 @@
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <vector>
 
 #include "advancedCalculator.hpp"
 #include "gtest/gtest.h"
 
 bool cmp(double first, double second, double epsilon = 0.5) {
+    std::cout << first << " -- " << second << std::endl;
     return (fabs(first - second) < epsilon);
 }
 
@@ -170,7 +172,7 @@ TEST(advancedCalculatorTest, ShouldReturnDivideBy0) {
 
     ASSERT_EQ(process("123 / 0", &result), ErrorCode::DivideBy0);
     ASSERT_EQ(process("123 / 0.0", &result), ErrorCode::DivideBy0);
-    ASSERT_EQ(process("123 / -0", &result), ErrorCode::DivideBy0); 
+    ASSERT_EQ(process("123 / -0", &result), ErrorCode::DivideBy0);
     ASSERT_EQ(process("123 / -0.0", &result), ErrorCode::DivideBy0);
     ASSERT_EQ(process("-123 / -0.0", &result), ErrorCode::DivideBy0);
     ASSERT_EQ(process("0.0 / 0", &result), ErrorCode::DivideBy0);

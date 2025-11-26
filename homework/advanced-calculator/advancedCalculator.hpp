@@ -26,4 +26,3 @@ private:
 };
 
 ErrorCode process(const std::string& input, double* out);
-
